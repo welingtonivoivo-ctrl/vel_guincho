@@ -285,8 +285,16 @@ CreateThread(function()
                 local fim = cb.gancho and DoesEntityExist(cb.gancho) and GetEntityCoords(cb.gancho)
                     or (cb.alvo and DoesEntityExist(cb.alvo) and pontoDoCarro(cb.alvo, cb.ponto))
                 if motor and fim then
-                    PinRopeVertex(cb.corda, 0, motor.x, motor.y, motor.z)
-                    PinRopeVertex(cb.corda, GetRopeVertexCount(cb.corda) - 1, fim.x, fim.y, fim.z)
+                    -- todos os pontos da corda na linha reta: cabo de aço tensionado, sem a física
+                    -- elástica da corda do GTA (que estica e afunda sozinha)
+                    local n = GetRopeVertexCount(cb.corda)
+                    if n > 1 then
+                        local passo = (fim - motor) / (n - 1)
+                        for i = 0, n - 1 do
+                            local p = motor + passo * i
+                            PinRopeVertex(cb.corda, i, p.x, p.y, p.z)
+                        end
+                    end
                 end
             end
         end
