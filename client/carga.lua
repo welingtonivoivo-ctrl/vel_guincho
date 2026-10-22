@@ -231,6 +231,28 @@ local PUXAO = 1.5       -- metros de cabo esticado para o carro ficar de pé
 local base = {}         -- [carro] = { dist, rot } quando o cabo foi engatado (cabo ainda frouxo)
 
 ---Gira o carro de rot0 (tombado) para de pé conforme o progresso (0 a 1); no fim assenta e avisa o servidor.
+---Ângulo de partida do giro (eixo Y = rolagem). De cabeça para baixo (±180°) há dois caminhos até 0°:
+---escolhe o que rola o carro na direção do guincho (o lado do carro virado para o cabo sobe primeiro).
+---De lado, volta pelo caminho mais curto.
+local function partida(caminhao, carro, rot)
+    local rolagem = (rot.y + 180.0) % 360.0 - 180.0
+    if math.abs(rolagem) < 135.0 then return vec3(rot.x, rolagem, rot.z) end
+    local c = cadastroDe(caminhao)
+    local motor = c and GuinchoCabo.motorNoMundo(caminhao, c)
+    if not motor or not controlar(carro) then return vec3(rot.x, rolagem, rot.z) end
+    local centro = GetEntityCoords(carro)
+    local puxar = motor - centro
+    -- testa a meio caminho (+90°): para onde o "teto" do carro apontaria
+    FreezeEntityPosition(carro, true)
+    SetEntityRotation(carro, 0.0, 90.0, rot.z, 2, true)
+    Wait(0)
+    local teto = GetOffsetFromEntityInWorldCoords(carro, 0.0, 0.0, 1.0) - GetEntityCoords(carro)
+    SetEntityRotation(carro, rot.x, rot.y, rot.z, 2, true)
+    -- o teto aponta para longe do cabo no meio do giro => o lado perto do cabo subiu: é esse caminho
+    local viaMais = (teto.x * puxar.x + teto.y * puxar.y) < 0.0
+    return vec3(rot.x, viaMais and 180.0 or -180.0, rot.z)
+end
+
 local function girar(caminhao, carro, rot0, progresso)
     if not controlar(carro) then return false end
     FreezeEntityPosition(carro, true)
@@ -252,7 +274,7 @@ local function desvirarPeloCabo(caminhao, c, carro)
     local dist = #(motor - GetEntityCoords(carro))
     local b = base[carro]
     if not b then
-        base[carro] = { dist = dist, rot = GetEntityRotation(carro, 2) }
+        base[carro] = { dist = dist, rot = partida(caminhao, carro, GetEntityRotation(carro, 2)) }
         return
     end
     local progresso = math.min(1.0, math.max(0.0, (dist - b.dist) / PUXAO))
@@ -268,7 +290,7 @@ function desvirarPelaCaixa(caminhao)
     if not carro or carro == 0 or not DoesEntityExist(carro) then return end
     operando = true
     alavanca(true)
-    local rot0 = GetEntityRotation(carro, 2)
+    local rot0 = partida(caminhao, carro, GetEntityRotation(carro, 2))
     local t0 = GetGameTimer()
     while DoesEntityExist(carro) do
         local progresso = math.min(1.0, (GetGameTimer() - t0) / 3000)
