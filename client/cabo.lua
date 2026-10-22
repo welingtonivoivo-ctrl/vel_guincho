@@ -154,7 +154,8 @@ CreateThread(function()
         }
         OPCOES_CARRO[#OPCOES_CARRO + 1] = {
             name = 'vel_guincho_soltar_' .. ponto, icon = 'fa-solid fa-link-slash', label = locale('soltar_cabo'), distance = 2.0, offset = offset,
-            canInteract = function(ent) return meuCabo == nil and pontoEngatado(ent) == ponto end,
+            -- soltar em qualquer ponta (frente, traseira ou meio), não importa onde foi engatado
+            canInteract = function(ent) return meuCabo == nil and pontoEngatado(ent) ~= nil end,
             onSelect = function(data) CreateThread(function() soltar(data.entity) end) end,
         }
     end
