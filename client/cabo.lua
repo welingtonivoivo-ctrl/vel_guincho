@@ -322,3 +322,21 @@ AddEventHandler('onResourceStop', function(res)
     for _, o in ipairs(OPCOES_CARRO) do nomes[#nomes + 1] = o.name end
     pcall(function() exports.mri_Qinteract:removeGlobalVehicle(nomes) end)
 end)
+
+-- Diagnóstico (/guinchoinfo, admin): o que o guincho enxerga no veículo mais perto
+RegisterNetEvent('vel_guincho:client:info', function()
+    local v = lib.getClosestVehicle(GetEntityCoords(cache.ped), 6.0, false)
+    local linhas = {}
+    linhas[#linhas + 1] = ('cabo na mão: %s'):format(tostring(meuCabo))
+    if v then
+        local r = GetEntityRotation(v, 2)
+        linhas[#linhas + 1] = ('veículo %s | de cabeça para baixo: %s | roll %.0f | pitch %.0f | rot %.0f %.0f %.0f'):format(
+            GetDisplayNameFromVehicleModel(GetEntityModel(v)), tostring(IsEntityUpsidedown(v)), GetEntityRoll(v), GetEntityPitch(v), r.x, r.y, r.z)
+        linhas[#linhas + 1] = ('tombado: %s | engatado em caminhão: %s | é o caminhão do cabo: %s'):format(
+            tostring(GuinchoTombado(v)), tostring(caminhaoDoCarro(v)), tostring(v == meuCabo))
+    else
+        linhas[#linhas + 1] = 'nenhum veículo a 6 m'
+    end
+    for _, l in ipairs(linhas) do print('[vel_guincho] ' .. l) end
+    lib.notify({ title = 'Guincho', description = table.concat(linhas, ' · '), type = 'inform', duration = 15000 })
+end)

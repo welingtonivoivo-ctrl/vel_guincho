@@ -56,3 +56,8 @@ lib.addCommand('guinchocapotar', { help = 'Vira de rodas para cima o veículo ma
     if not Guincho.admin(source) then return end
     TriggerClientEvent('vel_guincho:client:capotar', source)
 end)
+
+lib.addCommand('guinchoinfo', { help = 'Diagnóstico do guincho no veículo mais perto' }, function(source)
+    if not Guincho.admin(source) then return end
+    TriggerClientEvent('vel_guincho:client:info', source)
+end)
