@@ -59,5 +59,9 @@
   "desvirado": "Car flipped upright. Unhook the cable to continue.",
   "capotar_nenhum": "No vehicle nearby (8 m).",
   "capotado": "Vehicle flipped for the test.",
-  "desvirar_caixa": "Winch in to flip the car"
+  "desvirar_caixa": "Winch in to flip the car",
+  "reconheca_primeiro": "Recognize the bed part in the panel before marking this point.",
+  "reconhecer_incline": "Get in the cab and tilt the bed with the truck keys (up to 25 s).",
+  "reconhecer_auto": "Recognizing the bed part (it will tilt and come back)...",
+  "osso_salvo": "Bed part recognized: %s."
 }

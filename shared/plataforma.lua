@@ -58,6 +58,28 @@ function Plataforma.detectarOsso(veiculo, mecanismo, maximo)
         if i then antes[nome] = { i = i, p = GetWorldPositionOfEntityBone(veiculo, i) } end
     end
     if not next(antes) then return nil end
+    -- cabine: o script não move a plataforma; espera o motorista inclinar (até 25 s) e vê qual peça andou
+    if mecanismo == 'cabine' then
+        local limite = GetGameTimer() + 25000
+        while GetGameTimer() < limite do
+            local melhor, distancia = nil, 0.3
+            for nome, b in pairs(antes) do
+                local d = #(GetWorldPositionOfEntityBone(veiculo, b.i) - b.p)
+                if d > distancia then melhor, distancia = nome, d end
+            end
+            if melhor then
+                Wait(1000) -- deixa terminar de mover e confere de novo qual andou mais
+                for nome, b in pairs(antes) do
+                    local d = #(GetWorldPositionOfEntityBone(veiculo, b.i) - b.p)
+                    if d > distancia then melhor, distancia = nome, d end
+                end
+                print(('[vel_guincho] peça da plataforma: %s (andou %.2f m)'):format(melhor, distancia))
+                return melhor
+            end
+            Wait(200)
+        end
+        return nil
+    end
     if Plataforma.travar(mecanismo) then FreezeEntityPosition(veiculo, true) end
     local alvo = math.max(0.4, (maximo or 1.0) * 0.6)
     -- a peça anda no ritmo do jogo: segue pedindo a posição até 4 s

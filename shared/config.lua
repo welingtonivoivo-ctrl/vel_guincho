@@ -15,9 +15,9 @@ Config.AcesPainel = { 'vel_guincho.admin', 'street.personagens.staff' }
 -- Caminhões cadastrados na primeira partida (só se a tabela estiver vazia).
 -- Pontos ficam vazios: são marcados no painel com a prévia (Etapa 2).
 Config.Semente = {
-    { modelo = 'volvocbmesp', nome = 'Guincho Bombeiros (AG)', tipo = 'plataforma', plataforma = 'garfo',
+    { modelo = 'volvocbmesp', nome = 'Guincho Bombeiros (AG)', tipo = 'plataforma', plataforma = 'cabine',
       empregos = { 'bombeiros', 'guincho_sp' } },
-    { modelo = 'delivery11cmm', nome = 'Guincho Polícia (CMM)', tipo = 'plataforma', plataforma = 'escavadeira',
+    { modelo = 'delivery11cmm', nome = 'Guincho Polícia (CMM)', tipo = 'plataforma', plataforma = 'cabine',
       empregos = { 'pmesp', 'pcesp', 'gcm', 'prf', 'police', 'guincho_sp' } },
     { modelo = 'deliverymec', nome = 'Guincho Mecânica', tipo = 'plataforma', plataforma = 'fixa',
       empregos = { 'mecanica_centro', 'guincho_sp' } },

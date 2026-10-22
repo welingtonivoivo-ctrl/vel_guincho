@@ -100,6 +100,18 @@ function F.ponto(source, id, nome, d)
     return { msg = locale('ponto_salvo', locale('ponto_' .. nome)) }
 end
 
+function F.osso(source, id, nome)
+    id = tonumber(id)
+    if not id or type(nome) ~= 'string' or not nome:match('^[%w_]+$') or #nome > 32 then return { erro = locale('pedido_invalido') } end
+    local pontos = decodificar(MySQL.scalar.await('SELECT pontos FROM `vel_guincho_caminhoes` WHERE id = ?', { id }))
+    -- peça nova: pontos presos à peça antiga deixam de valer
+    if pontos.osso and pontos.osso ~= nome then pontos.motor, pontos.carga = nil, nil end
+    pontos.osso = nome
+    MySQL.update.await('UPDATE `vel_guincho_caminhoes` SET pontos = ?, atualizado_por = ? WHERE id = ?', { json.encode(pontos), quem(source), id })
+    Guincho.publicar()
+    return { msg = locale('osso_salvo', nome) }
+end
+
 function F.remover(source, id)
     id = tonumber(id)
     if not id then return { erro = locale('pedido_invalido') } end

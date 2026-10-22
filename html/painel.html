@@ -122,11 +122,15 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
         <div class="card"><h3>Quem pode usar</h3><div class="empregos">${dados.empregos.map((j) =>
             `<label><input type="checkbox" data-emp="${esc(j.nome)}" ${c.empregos.includes(j.nome) ? 'checked' : ''}> ${esc(j.rotulo)}</label>`).join('')}</div></div>
         <div class="linha" style="margin-bottom:16px"><button class="btn ouro" id="e-salvar">Salvar cadastro</button><div style="flex:1"></div><button class="btn perigo" id="e-rem">Remover caminhão</button></div>
+        <div class="card" id="w-osso"><h3>Peça da plataforma ${c.pontos.osso ? '<span class="tag ok">Reconhecida ✓ (' + esc(c.pontos.osso) + ')</span>' : '<span class="tag falta">Falta reconhecer</span>'}</h3>
+            <p class="ajuda">Para o motor e o carro acompanharem a plataforma quando ela inclina. Clique, entre na cabine e <b>incline a plataforma</b> com as teclas do caminhão (até 25 s). Faça com a plataforma <b>recolhida</b> no começo.</p>
+            <button class="btn peq" id="e-osso">${c.pontos.osso ? 'Reconhecer de novo' : 'Reconhecer'}</button></div>
         <div class="card"><h3>Pontos no caminhão</h3><div class="pontos">${PONTOS.filter((p) => p[3](c)).map(([k, t, d]) => `
             <div class="ponto"><div><div class="t1">${t} ${c.pontos[k] ? '<span class="tag ok">Marcado ✓</span>' : '<span class="tag falta">Falta marcar</span>'}</div><div class="mini">${d}</div></div>
             <button class="btn peq" data-marcar="${k}">${c.pontos[k] ? 'Marcar de novo' : 'Marcar'}</button></div>`).join('')}</div>
             <div class="linha" style="margin-top:10px"><button class="btn peq" id="e-ver">Ver pontos no caminhão (15 s)</button></div></div>`;
-        const mostrarMec = () => { const plat = $('#e-tipo').value === 'plataforma'; $('#w-mec').style.display = plat ? '' : 'none'; $('#w-inc').style.display = plat && $('#e-mec').value !== 'fixa' ? '' : 'none'; };
+        const mostrarMec = () => { const plat = $('#e-tipo').value === 'plataforma', mec = $('#e-mec').value; $('#w-mec').style.display = plat ? '' : 'none';
+            $('#w-inc').style.display = plat && mec !== 'fixa' && mec !== 'cabine' ? '' : 'none'; $('#w-osso').style.display = plat && mec !== 'fixa' ? '' : 'none'; };
         mostrarMec(); $('#e-tipo').onchange = mostrarMec; $('#e-mec').onchange = mostrarMec;
         let ti;
         $('#e-inc').oninput = (e) => { $('#e-incv').textContent = e.target.value + '%'; clearTimeout(ti); ti = setTimeout(() => nui('painelInclinar', { id: c.id, pos: e.target.value / 100 }), 250); };
@@ -143,6 +147,7 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
         };
         document.querySelectorAll('[data-marcar]').forEach((b) => b.onclick = () => nui('painelMarcar', { id: c.id, ponto: b.dataset.marcar }));
         $('#e-ver').onclick = () => nui('painelVer', { id: c.id });
+        $('#e-osso').onclick = () => nui('painelOsso', { id: c.id });
     }
 
     $('#lista').addEventListener('click', (e) => { const i = e.target.closest('[data-id]'); if (!i) return; sel = +i.dataset.id; lista(); editor(); });

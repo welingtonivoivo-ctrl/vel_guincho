@@ -59,5 +59,9 @@
   "desvirado": "Carro desvirado. Solte o cabo do carro para seguir.",
   "capotar_nenhum": "Nenhum veículo perto (até 8 m).",
   "capotado": "Veículo capotado para o teste.",
-  "desvirar_caixa": "Puxar cabo para desvirar o carro"
+  "desvirar_caixa": "Puxar cabo para desvirar o carro",
+  "reconheca_primeiro": "Reconheça a peça da plataforma no painel antes de marcar este ponto.",
+  "reconhecer_incline": "Entre na cabine e incline a plataforma com as teclas do caminhão (até 25 s).",
+  "reconhecer_auto": "Reconhecendo a peça da plataforma (ela vai inclinar e voltar)...",
+  "osso_salvo": "Peça da plataforma reconhecida: %s."
 }

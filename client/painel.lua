@@ -127,6 +127,7 @@ RegisterNUICallback('painelMarcar', function(d, cb)
         -- ponto na plataforma que inclina: fica preso à peça que se move com ela
         local osso, ossoIndice, ancora
         if regra.naPlataforma and c.plataforma ~= 'fixa' then
+            if c.plataforma == 'cabine' and not c.pontos.osso then return { erro = locale('reconheca_primeiro') } end
             osso = c.pontos.osso or Plataforma.detectarOsso(caminhao, c.plataforma, maximo)
             ossoIndice = Plataforma.osso(caminhao, osso)
             if not ossoIndice then return { erro = locale('sem_osso') } end
@@ -147,6 +148,21 @@ RegisterNUICallback('painelMarcar', function(d, cb)
         if not dado then return nil end
         dado.osso = osso
         return lib.callback.await('vel_guincho:painel:ponto', false, c.id, d.ponto, dado)
+    end)
+end)
+
+-- Reconhecer a peça da plataforma ({ id }): o admin inclina pela cabine e o sistema vê qual peça andou
+RegisterNUICallback('painelOsso', function(d, cb)
+    cb(1)
+    local c = type(d) == 'table' and cadastroPorId(tonumber(d.id))
+    if not c or c.plataforma == 'fixa' then return end
+    local caminhao = caminhaoPerto(c.modelo)
+    if not caminhao then return notificar(locale('fique_perto', c.nome), 'error') end
+    noMundo(function()
+        notificar(c.plataforma == 'cabine' and locale('reconhecer_incline') or locale('reconhecer_auto'), 'inform')
+        local osso = Plataforma.detectarOsso(caminhao, c.plataforma, c.pontos.inclinacao or 1.0)
+        if not osso then return { erro = locale('sem_osso') } end
+        return lib.callback.await('vel_guincho:painel:osso', false, c.id, osso)
     end)
 end)
 
