@@ -32,11 +32,32 @@ local function ancoraDe(caminhao, c)
     return a
 end
 
+-- A posição de carga foi marcada com a prévia de um Sultan: o centro guardado é o centro dele.
+-- Cada modelo tem o centro numa altura diferente da base (helicóptero bem mais alto que um carro),
+-- então o centro é corrigido para a base do veículo ficar no assoalho.
+local MODELO_PREVIA = `sultan`
+local altura = {} -- [modelo] = metros a subir em relação ao Sultan
+
+local function ajusteAltura(carro)
+    local modelo = GetEntityModel(carro)
+    if altura[modelo] then return altura[modelo] end
+    if not HasModelLoaded(MODELO_PREVIA) then lib.requestModel(MODELO_PREVIA, 3000) end
+    local minPrevia = GetModelDimensions(MODELO_PREVIA)
+    local min = GetModelDimensions(modelo)
+    altura[modelo] = minPrevia.z - min.z
+    return altura[modelo]
+end
+
 ---Pose do carro preso na plataforma agora (relativa ao caminhão): centro, inclinação, giro.
-local function poseCarga(caminhao, c, ponto)
+local function poseCarga(caminhao, c, ponto, carro)
     local centro, inclinacao, giro = Plataforma.carga(caminhao, c.pontos.carga, ancoraDe(caminhao, c))
     -- engatado pela traseira, o carro sobe de ré
     if ponto == 'tras' then giro = (giro + 180.0) % 360.0 end
+    if carro then
+        -- sobe perpendicular ao assoalho (que pode estar inclinado)
+        local d, r = ajusteAltura(carro), math.rad(inclinacao)
+        centro = centro + vec3(0.0, -math.sin(r) * d, math.cos(r) * d)
+    end
     return centro, inclinacao, giro
 end
 
@@ -67,7 +88,7 @@ local function caminho(caminhao, carro, c, ponto)
     local min = GetModelDimensions(GetEntityModel(carro))
     local lift = -min.z
     local r = c.pontos.rampa
-    local centro, inclinacao, giro = poseCarga(caminhao, c, ponto)
+    local centro, inclinacao, giro = poseCarga(caminhao, c, ponto, carro)
     local agora = GetEntityCoords(carro)
     local inicio = GetOffsetFromEntityGivenWorldCoords(caminhao, agora.x, agora.y, agora.z)
     local giroAgora = (GetEntityHeading(carro) - GetEntityHeading(caminhao)) % 360.0
@@ -191,7 +212,7 @@ CreateThread(function()
                 local c = cadastroDe(caminhao)
                 local carro = NetworkGetEntityFromNetworkId(s.carro)
                 if c and carro ~= 0 and DoesEntityExist(carro) and NetworkHasControlOfEntity(carro) then
-                    local centro, inclinacao, giro = poseCarga(caminhao, c, s.ponto)
+                    local centro, inclinacao, giro = poseCarga(caminhao, c, s.ponto, carro)
                     prender(carro, caminhao, centro, inclinacao, giro)
                     espera = 0
                 end
