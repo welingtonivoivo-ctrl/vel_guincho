@@ -39,6 +39,8 @@ end
 ---@return string|nil nome do osso
 function Plataforma.detectarOsso(veiculo, mecanismo, maximo)
     if mecanismo == 'fixa' then return nil end
+    -- mecanismo garfo: a peça é sempre o garfo da empilhadeira
+    if mecanismo == 'garfo' and Plataforma.osso(veiculo, 'forks') then return 'forks' end
     local antes = {}
     for _, nome in ipairs(CANDIDATOS) do
         local i = Plataforma.osso(veiculo, nome)
@@ -46,21 +48,23 @@ function Plataforma.detectarOsso(veiculo, mecanismo, maximo)
     end
     if not next(antes) then return nil end
     FreezeEntityPosition(veiculo, true)
-    local alvo = math.max(0.3, (maximo or 1.0) * 0.6)
+    local alvo = math.max(0.4, (maximo or 1.0) * 0.6)
+    -- a peça anda no ritmo do jogo: segue pedindo a posição até 4 s
     local inicio = GetGameTimer()
-    while GetGameTimer() - inicio < 1500 do
-        Plataforma.mover(veiculo, mecanismo, alvo * (GetGameTimer() - inicio) / 1500)
+    while GetGameTimer() - inicio < 4000 do
+        Plataforma.mover(veiculo, mecanismo, math.min(alvo, alvo * (GetGameTimer() - inicio) / 1500))
         Wait(0)
     end
-    Wait(200)
-    local melhor, distancia = nil, 0.15
+    local melhor, distancia = nil, 0.05
     for nome, b in pairs(antes) do
         local d = #(GetWorldPositionOfEntityBone(veiculo, b.i) - b.p)
+        print(('[vel_guincho] peça %s andou %.2f m'):format(nome, d))
         if d > distancia then melhor, distancia = nome, d end
     end
+    print(('[vel_guincho] peça da plataforma: %s'):format(melhor or 'nenhuma'))
     inicio = GetGameTimer()
-    while GetGameTimer() - inicio < 1500 do
-        Plataforma.mover(veiculo, mecanismo, alvo * (1.0 - (GetGameTimer() - inicio) / 1500))
+    while GetGameTimer() - inicio < 2500 do
+        Plataforma.mover(veiculo, mecanismo, alvo * math.max(0.0, 1.0 - (GetGameTimer() - inicio) / 1500))
         Wait(0)
     end
     Plataforma.mover(veiculo, mecanismo, 0.0)
