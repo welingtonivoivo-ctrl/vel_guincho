@@ -126,15 +126,20 @@ local function cabeNoCaminhao(caminhao, carro)
     if not limite then return true end
     if limite.aeronave == false and AERONAVE[GetVehicleClass(carro)] then return false, 'sem_aeronave' end
     local min, max = GetModelDimensions(GetEntityModel(carro))
-    if (limite.comprimento or 0) > 0 and max.y - min.y > limite.comprimento then return false, 'grande_demais' end
+    local tamanho = max.y - min.y
+    if (limite.comprimento or 0) > 0 and tamanho > limite.comprimento then
+        return false, 'grande_demais', ('%.1f'):format(tamanho), ('%.1f'):format(limite.comprimento)
+    end
     return true
 end
 
 local function engatar(carro, ponto)
     if not meuCabo or not DoesEntityExist(meuCabo) then return end
     if ponto ~= 'lado' then
-        local cabe, motivo = cabeNoCaminhao(meuCabo, carro)
-        if not cabe then return notificar(motivo) end
+        local cabe, motivo, tamanho, limite = cabeNoCaminhao(meuCabo, carro)
+        if not cabe then
+            return lib.notify({ title = locale('painel_titulo'), description = locale(motivo, tamanho, limite), type = 'error' })
+        end
     end
     if pcall(lib.requestAnimDict, ANIM.dict, 3000) then
         TaskTurnPedToFaceEntity(cache.ped, carro, 600)
