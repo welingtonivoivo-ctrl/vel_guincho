@@ -49,11 +49,25 @@ function GuinchoTombado(carro)
     return math.abs(GetEntityRoll(carro)) > 60.0 or math.abs(GetEntityPitch(carro)) > 60.0
 end
 
-local function pontoDoCarro(carro, ponto)
-    if ponto == 'lado' then return GetEntityCoords(carro) end
+-- Classes de aeronave: a caixa do modelo inclui o rotor/asas, então as pontas da caixa ficam no ar
+local AERONAVE = { [15] = true, [16] = true }
+
+---Ponto de engate relativo ao carro, em metros: frente/traseira perto do chão; 'lado' = centro.
+---Em aeronaves, o engate fica na fuselagem (perto do centro e da base), não na ponta do rotor ou da asa.
+local function pontoLocal(carro, ponto)
+    if ponto == 'lado' then return vec3(0.0, 0.0, 0.0) end
     local min, max = GetModelDimensions(GetEntityModel(carro))
+    if AERONAVE[GetVehicleClass(carro)] then
+        local y = ponto == 'frente' and max.y * 0.4 or min.y * 0.4
+        return vec3(0.0, y, min.z + 0.6)
+    end
     local y = ponto == 'frente' and (max.y - 0.15) or (min.y + 0.15)
-    return GetOffsetFromEntityInWorldCoords(carro, 0.0, y, min.z + 0.45)
+    return vec3(0.0, y, min.z + 0.45)
+end
+
+local function pontoDoCarro(carro, ponto)
+    local o = pontoLocal(carro, ponto)
+    return GetOffsetFromEntityInWorldCoords(carro, o.x, o.y, o.z)
 end
 
 GuinchoCabo = { motorNoMundo = motorNoMundo }
@@ -138,14 +152,15 @@ local function pontoEngatado(carro)
     return caminhao and Entity(caminhao).state.velCabo.ponto
 end
 
--- No meio do para-choque da frente e no de trás (offset em proporção da caixa do modelo)
-local PONTAS = { frente = vec3(0.5, 1.0, 0.35), tras = vec3(0.5, 0.0, 0.35), lado = vec3(0.5, 0.5, 0.5) }
+-- Frente, traseira e meio: ponto calculado por modelo, em metros (anchor do Interact), com pontoLocal
+local PONTAS = { 'frente', 'tras', 'lado' }
 local OPCOES_CARRO = {}
 
 CreateThread(function()
-    for ponto, offset in pairs(PONTAS) do
+    for _, ponto in ipairs(PONTAS) do
+        local function anchor(ent) return pontoLocal(ent, ponto) end
         OPCOES_CARRO[#OPCOES_CARRO + 1] = {
-            name = 'vel_guincho_engatar_' .. ponto, icon = 'fa-solid fa-link', label = locale('engatar_' .. ponto), distance = 2.0, offset = offset,
+            name = 'vel_guincho_engatar_' .. ponto, icon = 'fa-solid fa-link', label = locale('engatar_' .. ponto), distance = 2.0, anchor = anchor,
             canInteract = function(ent)
                 -- carro tombado: só "para desvirar" (no meio do carro); em pé: frente ou traseira
                 return meuCabo ~= nil and ent ~= meuCabo and not caminhaoDoCarro(ent) and (ponto == 'lado') == GuinchoTombado(ent)
@@ -153,7 +168,7 @@ CreateThread(function()
             onSelect = function(data) CreateThread(function() engatar(data.entity, ponto) end) end,
         }
         OPCOES_CARRO[#OPCOES_CARRO + 1] = {
-            name = 'vel_guincho_soltar_' .. ponto, icon = 'fa-solid fa-link-slash', label = locale('soltar_cabo'), distance = 2.0, offset = offset,
+            name = 'vel_guincho_soltar_' .. ponto, icon = 'fa-solid fa-link-slash', label = locale('soltar_cabo'), distance = 2.0, anchor = anchor,
             -- soltar em qualquer ponta (frente, traseira ou meio), não importa onde foi engatado
             canInteract = function(ent) return meuCabo == nil and pontoEngatado(ent) ~= nil end,
             onSelect = function(data) CreateThread(function() soltar(data.entity) end) end,

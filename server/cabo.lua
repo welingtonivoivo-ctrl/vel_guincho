@@ -85,7 +85,8 @@ lib.callback.register('vel_guincho:cabo:engatar', function(source, netCaminhao, 
     if not s or s.mao ~= source or not carro or carro == caminhao or GetEntityType(carro) ~= 2 then return false end
     if ponto ~= 'frente' and ponto ~= 'tras' and ponto ~= 'lado' then return false end
     local c = cadastroDe(caminhao)
-    if distancia(source, carro) > 4.0 then return false, 'longe' end
+    -- medido do centro: aeronaves e carros longos têm as pontas a mais de 4 m do centro
+    if distancia(source, carro) > 8.0 then return false, 'longe' end
     if #(GetEntityCoords(carro) - GetEntityCoords(caminhao)) > (Config.Cabo[c.cabo] or 15.0) + 8.0 then return false, 'cabo_curto' end
     if not vazio(carro) then return false, 'so_vazio' end
     -- carro tombado só engata "para desvirar"; carro em pé só pela frente ou traseira
