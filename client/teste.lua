@@ -27,7 +27,7 @@ RegisterNetEvent('vel_guincho:client:testarPlataforma', function(mecanismo, maxi
     if mecanismo == 'fixa' then
         return lib.notify({ description = locale('plataforma_fixa', c and c.nome or GetDisplayNameFromVehicleModel(GetEntityModel(veiculo))), type = 'inform' })
     end
-    maximo = tonumber(maximo) or (c and c.inclinacaoMax) or 1.0
+    maximo = tonumber(maximo) or (c and c.pontos and c.pontos.inclinacao) or 1.0
     maximo = math.max(0.05, math.min(1.0, maximo))
     testando = true
     lib.notify({ description = locale('testando', mecanismo, math.floor(maximo * 100)), type = 'inform' })

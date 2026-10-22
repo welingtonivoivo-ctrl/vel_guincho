@@ -7,8 +7,10 @@ Config.CaboPadrao = 'medio'
 -- Tempo para a plataforma que inclina ir de um extremo ao outro (ms)
 Config.TempoPlataforma = 4000
 
--- Quem pode usar o painel e os comandos de teste
+-- Quem pode usar o painel e os comandos de teste: a permissão própria (registrada no mri_Qadmin)
+-- e outras ACEs de staff que a cidade já usa (qualquer uma serve)
 Config.AcePainel = 'vel_guincho.admin'
+Config.AcesPainel = { 'vel_guincho.admin', 'street.personagens.staff' }
 
 -- Caminhões cadastrados na primeira partida (só se a tabela estiver vazia).
 -- Pontos ficam vazios: são marcados no painel com a prévia (Etapa 2).

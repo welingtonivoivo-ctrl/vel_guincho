@@ -16,17 +16,24 @@ shared_scripts {
 }
 
 client_scripts {
+    'client/placement.lua',
     'client/teste.lua',
+    'client/painel.lua',
 }
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/banco.lua',
     'server/main.lua',
+    'server/painel.lua',
 }
+
+ui_page 'html/index.html'
 
 files {
     'locales/*.json',
+    'html/index.html',
+    'html/painel.html',
 }
 
 dependencies {

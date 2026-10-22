@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Guincho</title>
+<!-- Aba "Guincho" do mri_Qadmin. Fala com client/painel.lua; o servidor confere tudo. -->
+<style>
+:root { --bg: #0b0e12; --card: #12161c; --card2: #181d25; --borda: #252c37; --texto: #e6e8eb; --suave: #8b93a1;
+    --ouro: #c9a665; --ouro2: #e0c48a; --verde: #4fb37a; --vermelho: #d65c5c; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--texto); font: 14px/1.45 'Segoe UI', system-ui, sans-serif; }
+body { display: flex; flex-direction: column; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--borda); }
+header h1 { margin: 0; font-size: 17px; font-weight: 600; } header h1 span { color: var(--ouro); } header .esp { flex: 1; }
+.corpo { flex: 1; display: grid; grid-template-columns: 300px 1fr; min-height: 0; }
+.lista { border-right: 1px solid var(--borda); overflow: auto; padding: 12px; }
+.editor { overflow: auto; padding: 18px 22px 30px; }
+.item { padding: 10px 12px; border: 1px solid var(--borda); border-radius: 10px; margin-bottom: 8px; cursor: pointer; background: var(--card); }
+.item:hover { border-color: var(--ouro); } .item.on { border-color: var(--ouro); background: rgba(201,166,101,.08); }
+.item .t1 { font-weight: 600; } .mini { color: var(--suave); font-size: 12.5px; }
+.ajuda { color: var(--suave); margin: 0 0 14px; max-width: 760px; }
+.card { background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+.card h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; }
+.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.grade label { display: block; color: var(--suave); font-size: 12.5px; margin-bottom: 5px; }
+input, select { background: var(--card2); border: 1px solid var(--borda); color: var(--texto); border-radius: 7px; padding: 8px 10px; font: inherit; width: 100%; }
+input:focus, select:focus { outline: none; border-color: var(--ouro); }
+input[type=range] { padding: 0; accent-color: var(--ouro); }
+input[type=checkbox] { width: auto; accent-color: var(--ouro); }
+.btn { background: var(--card2); border: 1px solid var(--borda); color: var(--texto); border-radius: 7px; padding: 8px 14px; font: inherit; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--ouro); } .btn.ouro { background: var(--ouro); border-color: var(--ouro); color: #fff; font-weight: 600; }
+.btn.perigo { color: var(--vermelho); } .btn.perigo.armado { background: var(--vermelho); color: #fff; border-color: var(--vermelho); }
+.btn.peq { padding: 5px 10px; font-size: 12.5px; }
+.linha { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pontos { display: flex; flex-direction: column; gap: 8px; }
+.ponto { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; background: var(--card2); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
+.ponto .t1 { font-weight: 600; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; background: #222a35; color: var(--suave); }
+.tag.ok { background: #183225; color: var(--verde); } .tag.falta { background: #3a2f17; color: var(--ouro2); }
+.empregos { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 4px 12px; max-height: 220px; overflow: auto; }
+.empregos label { display: flex; gap: 8px; align-items: center; padding: 3px 0; color: var(--texto); font-size: 13px; }
+.vazio { color: var(--suave); padding: 30px 6px; }
+#toast { position: fixed; right: 20px; bottom: 20px; max-width: 420px; padding: 11px 16px; border-radius: 9px; background: var(--card2); border: 1px solid var(--borda);
+    opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
+#toast.on { opacity: 1; transform: none; } #toast.ok { border-color: var(--verde); } #toast.erro { border-color: var(--vermelho); }
+</style>
+</head>
+<body>
+<header>
+    <h1><span>Guincho</span> · caminhões</h1>
+    <div class="esp"></div>
+    <button class="btn ouro" id="novo" title="Entre no caminhão e clique">+ Cadastrar o caminhão em que estou</button>
+</header>
+<div class="corpo">
+    <div class="lista" id="lista"></div>
+    <div class="editor" id="editor"><div class="vazio">Escolha um caminhão na lista.</div></div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function () {
+    const RES = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'vel_guincho';
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const dev = typeof window.invokeNative === 'undefined' && !window.parent.invokeNative;
+    function nui(nome, corpo) {
+        if (dev) return Promise.resolve(mock(nome, corpo || {}));
+        return fetch(`https://${RES}/${nome}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo || {}) })
+            .then((r) => r.json()).catch(() => ({ erro: 'Sem resposta do jogo.' }));
+    }
+    const chamar = (fn, ...args) => nui('painel', { fn, args });
+    let tt;
+    function toast(t, tipo) { const e = $('#toast'); e.textContent = t; e.className = 'on ' + (tipo || ''); clearTimeout(tt); tt = setTimeout(() => e.className = '', 3200); }
+    function resposta(r) { if (!r || r.erro) { toast(r && r.erro || 'Erro.', 'erro'); return false; } if (r.msg) toast(r.msg, 'ok'); return true; }
+
+    const TIPOS = { plataforma: 'Plataforma', gancho: 'Gancho (arrasta)' };
+    const MEC = { fixa: 'Fixa (rampa virtual)', garfo: 'Inclina — garfo', braco: 'Inclina — braço de reboque', escavadeira: 'Inclina — escavadeira' };
+    const CABOS = { curto: 'Curto (10 m)', medio: 'Médio (15 m)', longo: 'Longo (25 m)' };
+    const PONTOS = [
+        ['motor', 'Motor do guincho', 'Onde o cabo sai (frente da plataforma). Mire na peça do motor.', (c) => c.tipo === 'plataforma'],
+        ['caixa', 'Caixa de comando', 'Onde o operador fica para puxar, soltar e inclinar (lateral). Mire na lateral do caminhão.', () => true],
+        ['carga', 'Posição de carga', 'Onde o carro fica preso em cima da plataforma. Aparece um carro-fantasma: mire na plataforma e gire com ← →.', (c) => c.tipo === 'plataforma'],
+        ['rampa', 'Início da rampa', 'Onde o carro começa a subir (chão atrás da plataforma). Se a plataforma inclina, ela desce sozinha para você marcar.', (c) => c.tipo === 'plataforma'],
+        ['engate', 'Engate do gancho', 'Ponto de engate na traseira do caminhão.', (c) => c.tipo === 'gancho'],
+    ];
+
+    let dados = { caminhoes: [], empregos: [] }, sel = null;
+
+    function carregar() {
+        chamar('dados').then((d) => { if (!d || d.erro) return toast(d && d.erro || 'Erro.', 'erro'); dados = d; lista(); editor(); });
+    }
+
+    function lista() {
+        const c = dados.caminhoes;
+        $('#lista').innerHTML = c.length ? c.map((x) => {
+            const total = PONTOS.filter((p) => p[3](x)).length, feitos = PONTOS.filter((p) => p[3](x) && x.pontos[p[0]]).length;
+            return `<div class="item ${sel === x.id ? 'on' : ''}" data-id="${x.id}"><div class="t1">${esc(x.nome)}</div>
+                <div class="mini">${esc(x.modelo)} · ${TIPOS[x.tipo] || x.tipo} · pontos ${feitos}/${total}</div></div>`;
+        }).join('') : '<div class="vazio">Nenhum caminhão cadastrado.</div>';
+    }
+
+    function atual() { return dados.caminhoes.find((x) => x.id === sel); }
+
+    function editor() {
+        const c = atual();
+        if (!c) { $('#editor').innerHTML = '<div class="vazio">Escolha um caminhão na lista.</div>'; return; }
+        const inc = Math.round((c.pontos.inclinacao || 1) * 100);
+        $('#editor').innerHTML = `
+        <p class="ajuda">Fique perto de um <b>${esc(c.nome)}</b> (spawn <b>${esc(c.modelo)}</b>) para marcar os pontos e testar a plataforma. Os pontos valem para todos os caminhões desse modelo.</p>
+        <div class="card"><h3>Cadastro</h3><div class="grade">
+            <div><label>Nome</label><input id="e-nome" maxlength="64" value="${esc(c.nome)}"></div>
+            <div><label>Tipo</label><select id="e-tipo">${Object.entries(TIPOS).map(([k, v]) => `<option value="${k}" ${c.tipo === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+            <div id="w-mec"><label>Plataforma</label><select id="e-mec">${Object.entries(MEC).map(([k, v]) => `<option value="${k}" ${c.plataforma === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+            <div><label>Cabo</label><select id="e-cabo">${Object.entries(CABOS).map(([k, v]) => `<option value="${k}" ${c.cabo === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+            <div><label>&nbsp;</label><label style="display:flex;gap:8px;align-items:center;color:var(--texto)"><input type="checkbox" id="e-serv" ${c.exigeServico ? 'checked' : ''}> Exigir estar em serviço</label></div>
+        </div></div>
+        <div class="card" id="w-inc"><h3>Inclinação máxima da plataforma</h3>
+            <p class="ajuda">Arraste até a ponta da plataforma <b>encostar no chão</b> sem forçar. A plataforma do caminhão perto se move junto (caminhão travado).</p>
+            <div class="linha"><input type="range" id="e-inc" min="5" max="100" step="1" value="${inc}" style="flex:1"><b id="e-incv" style="width:48px;text-align:right">${inc}%</b>
+            <button class="btn peq" id="e-incz">Recolher</button></div>
+        </div>
+        <div class="card"><h3>Quem pode usar</h3><div class="empregos">${dados.empregos.map((j) =>
+            `<label><input type="checkbox" data-emp="${esc(j.nome)}" ${c.empregos.includes(j.nome) ? 'checked' : ''}> ${esc(j.rotulo)}</label>`).join('')}</div></div>
+        <div class="linha" style="margin-bottom:16px"><button class="btn ouro" id="e-salvar">Salvar cadastro</button><div style="flex:1"></div><button class="btn perigo" id="e-rem">Remover caminhão</button></div>
+        <div class="card"><h3>Pontos no caminhão</h3><div class="pontos">${PONTOS.filter((p) => p[3](c)).map(([k, t, d]) => `
+            <div class="ponto"><div><div class="t1">${t} ${c.pontos[k] ? '<span class="tag ok">Marcado ✓</span>' : '<span class="tag falta">Falta marcar</span>'}</div><div class="mini">${d}</div></div>
+            <button class="btn peq" data-marcar="${k}">${c.pontos[k] ? 'Marcar de novo' : 'Marcar'}</button></div>`).join('')}</div>
+            <div class="linha" style="margin-top:10px"><button class="btn peq" id="e-ver">Ver pontos no caminhão (15 s)</button></div></div>`;
+        const mostrarMec = () => { const plat = $('#e-tipo').value === 'plataforma'; $('#w-mec').style.display = plat ? '' : 'none'; $('#w-inc').style.display = plat && $('#e-mec').value !== 'fixa' ? '' : 'none'; };
+        mostrarMec(); $('#e-tipo').onchange = mostrarMec; $('#e-mec').onchange = mostrarMec;
+        let ti;
+        $('#e-inc').oninput = (e) => { $('#e-incv').textContent = e.target.value + '%'; clearTimeout(ti); ti = setTimeout(() => nui('painelInclinar', { id: c.id, pos: e.target.value / 100 }), 250); };
+        $('#e-incz').onclick = () => nui('painelInclinar', { id: c.id, pos: 0 });
+        $('#e-salvar').onclick = () => {
+            const empregos = [...document.querySelectorAll('[data-emp]')].filter((i) => i.checked).map((i) => i.dataset.emp);
+            chamar('salvar', c.id, { nome: $('#e-nome').value, tipo: $('#e-tipo').value, plataforma: $('#e-mec').value, cabo: $('#e-cabo').value,
+                exigeServico: $('#e-serv').checked, empregos, inclinacao: $('#e-inc').value / 100 }).then((r) => { if (resposta(r)) carregar(); });
+        };
+        let armado = 0;
+        $('#e-rem').onclick = (e) => {
+            if (Date.now() - armado > 3000) { armado = Date.now(); e.target.classList.add('armado'); e.target.textContent = 'Clique de novo para remover'; return; }
+            chamar('remover', c.id).then((r) => { if (resposta(r)) { sel = null; carregar(); } });
+        };
+        document.querySelectorAll('[data-marcar]').forEach((b) => b.onclick = () => nui('painelMarcar', { id: c.id, ponto: b.dataset.marcar }));
+        $('#e-ver').onclick = () => nui('painelVer', { id: c.id });
+    }
+
+    $('#lista').addEventListener('click', (e) => { const i = e.target.closest('[data-id]'); if (!i) return; sel = +i.dataset.id; lista(); editor(); });
+    $('#novo').onclick = () => nui('painelNovo').then((r) => { if (resposta(r)) carregar(); });
+
+    // Protocolo de plugin do mri_Qadmin
+    const embutido = window.parent && window.parent !== window;
+    window.addEventListener('message', (e) => {
+        const m = e.data || {};
+        if (m.type === 'mri-plugin/init' || m.type === 'mri-plugin/theme-changed') {
+            const r = document.documentElement.style;
+            if (m.accentColor) { r.setProperty('--ouro', m.accentColor); r.setProperty('--ouro2', m.accentColor); }
+            if (m.backgroundColor) r.setProperty('--bg', m.backgroundColor);
+        } else if (m.type === 'mri-plugin/navigate' || (m.type === 'mri-plugin/visibility' && m.visible)) carregar();
+    });
+    if (embutido) window.parent.postMessage({ type: 'mri-plugin/ready' }, '*');
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (embutido) window.parent.postMessage({ type: 'mri-plugin/request-close' }, '*'); else nui('painelFechar');
+    });
+
+    function mock(n, b) {
+        if (n === 'painel' && b.fn === 'dados') return {
+            caminhoes: [{ id: 1, modelo: 'volvocbmesp', nome: 'Guincho Bombeiros (AG)', tipo: 'plataforma', plataforma: 'garfo', empregos: ['bombeiros', 'guincho_sp'], exigeServico: true, cabo: 'medio', pontos: { motor: { x: 0, y: 1, z: 1 } } },
+                { id: 5, modelo: 'towtruck', nome: 'Reboque (gancho)', tipo: 'gancho', plataforma: 'fixa', empregos: ['guincho_sp'], exigeServico: true, cabo: 'medio', pontos: {} }],
+            empregos: [{ nome: 'bombeiros', rotulo: 'Corpo de Bombeiros (CBPMESP)' }, { nome: 'guincho_sp', rotulo: 'Auto Socorro & Guincho SP' }, { nome: 'pmesp', rotulo: 'Polícia Militar (PMESP)' }] };
+        return { msg: 'Feito (prévia).' };
+    }
+    carregar();
+})();
+</script>
+</body>
+</html>

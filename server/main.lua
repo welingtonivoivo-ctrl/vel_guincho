@@ -7,7 +7,11 @@ function Guincho.publicar()
 end
 
 function Guincho.admin(source)
-    return source == 0 or IsPlayerAceAllowed(source, Config.AcePainel) or IsPlayerAceAllowed(source, 'command')
+    if source == 0 then return true end
+    for _, ace in ipairs(Config.AcesPainel) do
+        if IsPlayerAceAllowed(source, ace) then return true end
+    end
+    return false
 end
 
 CreateThread(function()

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>vel_guincho</title>
+<!-- ui_page: trilho de teclas das ferramentas de marcação (e, nas próximas etapas, da caixa de comando). -->
+<style>
+:root { --ouro: #c9a665; --texto: #e6e8eb; --suave: #8b93a1; }
+html, body { margin: 0; background: transparent; font: 14px/1.4 'Segoe UI', system-ui, sans-serif; color: var(--texto); overflow: hidden; }
+#trilho { position: fixed; left: 50%; bottom: 5vh; transform: translate(-50%, 12px); display: flex; align-items: center; gap: 20px;
+    padding: 13px 20px; border-radius: 14px; background: rgba(11,14,18,.92); border: 1px solid rgba(201,166,101,.45);
+    box-shadow: 0 18px 50px rgba(0,0,0,.55); opacity: 0; transition: opacity .2s ease, transform .2s ease; pointer-events: none; white-space: nowrap; }
+#trilho.on { opacity: 1; transform: translate(-50%, 0); }
+#trilho .t { font-weight: 800; font-size: 15px; display: flex; flex-direction: column; gap: 2px; }
+#trilho .t span { font-weight: 400; font-size: 12.5px; color: var(--suave); }
+#trilho .k { font-size: 14px; color: var(--suave); }
+kbd { display: inline-block; padding: 2px 8px; margin: 0 2px; border-radius: 6px; background: rgba(201,166,101,.18); border: 1px solid var(--ouro);
+    color: var(--texto); font: 700 13px Consolas, monospace; }
+</style>
+</head>
+<body>
+<div id="trilho"></div>
+<script>
+(function () {
+    const t = document.getElementById('trilho');
+    function trilho(d) {
+        if (!d || !d.mode) { t.classList.remove('on'); return; }
+        if (d.mode === 'place') {
+            t.innerHTML = `<div class="t">Posição de carga <span>Mire na plataforma; o carro-fantasma mostra como o carro vai ficar.</span></div>
+                <div class="k"><kbd>←</kbd><kbd>→</kbd> Girar</div><div class="k"><kbd>E</kbd> Confirmar</div><div class="k"><kbd>Esc</kbd> Cancelar</div>`;
+        } else {
+            t.innerHTML = `<div class="t">Marcar ponto <span>Mire no lugar exato do caminhão.</span></div>
+                <div class="k"><kbd>E</kbd> Marcar aqui</div><div class="k"><kbd>Esc</kbd> Cancelar</div>`;
+        }
+        t.classList.add('on');
+    }
+    window.addEventListener('message', (e) => {
+        const m = e.data || {};
+        if (m.action === 'placeHud') trilho(m.data);
+        else if (m.action === 'cor' && m.data) document.documentElement.style.setProperty('--ouro', m.data);
+    });
+})();
+</script>
+</body>
+</html>
