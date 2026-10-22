@@ -1,7 +1,7 @@
 -- Etapa 3: o cabo. Opções do mri_Qinteract no motor do guincho e em qualquer carro; cada cliente
 -- desenha o cabo (corda do GTA) a partir do statebag velCabo do caminhão. O servidor decide tudo.
 
-local GANCHO = `prop_winch_hook_short`
+local GANCHO = `prop_rope_hook_01` -- só o gancho (43 cm); o prop_winch_hook_* já vem com 8–15 m de cabo
 local MAO = 57005 -- mão direita
 local ANIM = { dict = 'anim@amb@clubhouse@tutorial@bkr_tut_ig3@', clip = 'machinic_loop_mechandplayer' }
 local PERTO = 45.0
