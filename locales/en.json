@@ -25,5 +25,6 @@
   "ponto_carga": "Load position",
   "ponto_rampa": "Ramp start",
   "ponto_engate": "Hook hitch",
-  "ponto_vazio": "The aim hit nothing: point at the truck or the ground and try again."
+  "ponto_vazio": "The aim hit nothing: point at the truck or the ground and try again.",
+  "sem_osso": "Could not find the part that moves the bed on this model. Check the mechanism in the setup."
 }

@@ -9,9 +9,9 @@ local PERMITIDAS = { dados = true, salvar = true, novo = true, remover = true }
 
 -- Pontos que o painel marca e como cada um é marcado
 local PONTOS = {
-    motor = { ferramenta = 'ponto' },
+    motor = { ferramenta = 'ponto', naPlataforma = true },
     caixa = { ferramenta = 'aqui' },
-    carga = { ferramenta = 'carro' },
+    carga = { ferramenta = 'carro', naPlataforma = true },
     rampa = { ferramenta = 'ponto', inclinada = true },
     engate = { ferramenta = 'ponto' },
 }
@@ -43,6 +43,25 @@ local function relativo(caminhao, coords, heading)
     local r = { x = o.x, y = o.y, z = o.z }
     if heading then r.h = (heading - GetEntityHeading(caminhao)) % 360 end
     return r
+end
+
+---Posição no mundo de um ponto salvo (preso ao caminhão ou à peça da plataforma).
+---ancoras: cache { [osso] = objeto } que quem chama apaga depois.
+local function noMundoDe(caminhao, p, ancoras)
+    if p.osso then
+        local a = ancoras[p.osso]
+        if a == nil then
+            local i = Plataforma.osso(caminhao, p.osso)
+            a = i and Plataforma.ancora(caminhao, i) or false
+            ancoras[p.osso] = a
+        end
+        if a then return GetOffsetFromEntityInWorldCoords(a, p.x, p.y, p.z) end
+    end
+    return GetOffsetFromEntityInWorldCoords(caminhao, p.x, p.y, p.z)
+end
+
+local function apagarAncoras(ancoras)
+    for _, a in pairs(ancoras) do if a then DeleteEntity(a) end end
 end
 
 ---Leva a plataforma de 'de' até 'ate' (caminhão travado enquanto ela se move).
@@ -98,22 +117,29 @@ RegisterNUICallback('painelMarcar', function(d, cb)
     noMundo(function()
         local inclinada = regra.inclinada and c.plataforma ~= 'fixa'
         local maximo = c.pontos.inclinacao or 1.0
-        if inclinada then moverPlataforma(caminhao, c.plataforma, 0.0, maximo) end
-        local r
-        if regra.ferramenta == 'carro' then
-            -- já devolve relativo ao caminhão
-            local o = GuinchoPlacer.onTruck({ vehicle = CARRO_PREVIA, truck = caminhao, start = c.pontos.carga })
-            if inclinada then moverPlataforma(caminhao, c.plataforma, maximo, 0.0) end
-            if not o then return nil end
-            return lib.callback.await('vel_guincho:painel:ponto', false, c.id, d.ponto, o)
-        elseif regra.ferramenta == 'aqui' then
-            r = GuinchoPlacer.here()
-        else
-            r = GuinchoPlacer.point({})
+        -- ponto na plataforma que inclina: fica preso à peça que se move com ela
+        local osso, ossoIndice, ancora
+        if regra.naPlataforma and c.plataforma ~= 'fixa' then
+            osso = c.pontos.osso or Plataforma.detectarOsso(caminhao, c.plataforma, maximo)
+            ossoIndice = Plataforma.osso(caminhao, osso)
+            if not ossoIndice then return { erro = locale('sem_osso') } end
+            ancora = Plataforma.ancora(caminhao, ossoIndice)
         end
-        local dado = r and relativo(caminhao, r.coords, r.heading)
+        local base = ancora or caminhao
+        if inclinada then moverPlataforma(caminhao, c.plataforma, 0.0, maximo) end
+        local dado
+        if regra.ferramenta == 'carro' then
+            local antiga = c.pontos.carga
+            local inicio = antiga and antiga.osso == osso and antiga or nil
+            dado = GuinchoPlacer.onTruck({ vehicle = CARRO_PREVIA, truck = caminhao, bone = ossoIndice, start = inicio })
+        else
+            local r = regra.ferramenta == 'aqui' and GuinchoPlacer.here() or GuinchoPlacer.point({})
+            dado = r and relativo(base, r.coords, r.heading)
+        end
         if inclinada then moverPlataforma(caminhao, c.plataforma, maximo, 0.0) end
+        if ancora then DeleteEntity(ancora) end
         if not dado then return nil end
+        dado.osso = osso
         return lib.callback.await('vel_guincho:painel:ponto', false, c.id, d.ponto, dado)
     end)
 end)
@@ -143,19 +169,21 @@ RegisterNUICallback('painelVer', function(d, cb)
     notificar(locale('vendo_pontos'), 'inform')
     CreateThread(function()
         local fantasma
+        local ancoras = {}
         local carga = c.pontos.carga
         if carga and pcall(lib.requestModel, joaat(CARRO_PREVIA), 5000) then
             fantasma = CreateVehicle(joaat(CARRO_PREVIA), GetEntityCoords(caminhao), 0.0, false, false)
             SetModelAsNoLongerNeeded(joaat(CARRO_PREVIA))
             SetEntityAlpha(fantasma, 170, false)
             SetEntityCollision(fantasma, false, false)
-            AttachEntityToEntity(fantasma, caminhao, 0, carga.x, carga.y, carga.z, 0.0, 0.0, carga.h or 0.0, false, false, false, false, 2, true)
+            local osso = Plataforma.osso(caminhao, carga.osso) or 0
+            AttachEntityToEntity(fantasma, caminhao, osso, carga.x, carga.y, carga.z, 0.0, 0.0, carga.h or 0.0, false, false, false, false, 2, true)
         end
         local fim = GetGameTimer() + 15000
         while GetGameTimer() < fim and DoesEntityExist(caminhao) do
             for nome, p in pairs(c.pontos) do
-                if type(p) == 'table' and p.x then
-                    local w = GetOffsetFromEntityInWorldCoords(caminhao, p.x, p.y, p.z)
+                if type(p) == 'table' and p.x and nome ~= 'carga' then
+                    local w = noMundoDe(caminhao, p, ancoras)
                     DrawMarker(28, w.x, w.y, w.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.15, 0.15, 0.15, 0, 230, 153, 200, false, false, 2, false, nil, nil, false)
                     local ok, sx, sy = World3dToScreen2d(w.x, w.y, w.z + 0.3)
                     if ok then
@@ -167,6 +195,7 @@ RegisterNUICallback('painelVer', function(d, cb)
             Wait(0)
         end
         if fantasma then DeleteEntity(fantasma) end
+        apagarAncoras(ancoras)
         reabrir()
     end)
 end)

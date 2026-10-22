@@ -178,7 +178,7 @@ end
 
 ---Carro-fantasma preso ao caminhão, já no centro: ↑ ↓ anda na plataforma, Shift + ↑ ↓ sobe e desce,
 ---← → gira, E confirma. Devolve o deslocamento relativo ao caminhão (sempre centralizado em X).
----@param opts { vehicle: string|number, truck: number, start?: { y: number, z: number, h: number } }
+---@param opts { vehicle: string|number, truck: number, bone?: number, start?: { y: number, z: number, h: number } }
 ---@return { x: number, y: number, z: number, h: number }|nil
 function GuinchoPlacer.onTruck(opts)
 	if active then return nil end
@@ -190,8 +190,10 @@ function GuinchoPlacer.onTruck(opts)
 	local cmin = GetModelDimensions(GetEntityModel(ghost))
 	local s = opts.start or {}
 	-- começo: metade de trás do caminhão, rodas na altura do topo do chassi
-	local y = tonumber(s.y) or (min.y * 0.35)
-	local z = tonumber(s.z) or ((min.z + max.z) * 0.5 - cmin.z)
+	local bone = opts.bone or 0
+	-- preso à peça da plataforma: começa em cima da origem dela; preso ao caminhão: metade de trás
+	local y = tonumber(s.y) or (opts.bone and 0.0 or (min.y * 0.35))
+	local z = tonumber(s.z) or (opts.bone and (0.3 - cmin.z) or ((min.z + max.z) * 0.5 - cmin.z))
 	local h = tonumber(s.h) or 0.0
 	active = true
 	hud({ mode = 'carga' })
@@ -208,7 +210,7 @@ function GuinchoPlacer.onTruck(opts)
 		if IsControlPressed(0, KEY.left) then h = h + ROTATE_SPEED * frame end
 		if IsControlPressed(0, KEY.right) then h = h - ROTATE_SPEED * frame end
 		h = h % 360
-		AttachEntityToEntity(ghost, truck, 0, 0.0, y, z, 0.0, 0.0, h, false, false, false, false, 2, true)
+		AttachEntityToEntity(ghost, truck, bone, 0.0, y, z, 0.0, 0.0, h, false, false, false, false, 2, true)
 		if IsControlJustPressed(0, KEY.mark) then
 			PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
 			local r = function(v) return math.floor(v * 1000 + 0.5) / 1000 end

@@ -85,8 +85,10 @@ function F.ponto(source, id, nome, d)
     if not (p.x and p.y and p.z) then return { erro = locale('pedido_invalido') } end
     if nome ~= 'carga' and math.abs(p.x) + math.abs(p.y) + math.abs(p.z) < 0.05 then return { erro = locale('ponto_vazio') } end
     if d.h then p.h = numero(d.h, 0, 360) end
+    if type(d.osso) == 'string' and d.osso:match('^[%w_]+$') and #d.osso <= 32 then p.osso = d.osso end
     local pontos = decodificar(MySQL.scalar.await('SELECT pontos FROM `vel_guincho_caminhoes` WHERE id = ?', { id }))
     pontos[nome] = p
+    if p.osso then pontos.osso = p.osso end
     MySQL.update.await('UPDATE `vel_guincho_caminhoes` SET pontos = ?, atualizado_por = ? WHERE id = ?', { json.encode(pontos), quem(source), id })
     Guincho.publicar()
     return { msg = locale('ponto_salvo', locale('ponto_' .. nome)) }

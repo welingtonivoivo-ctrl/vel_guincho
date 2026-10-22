@@ -25,5 +25,6 @@
   "ponto_carga": "Posição de carga",
   "ponto_rampa": "Início da rampa",
   "ponto_engate": "Engate do gancho",
-  "ponto_vazio": "A mira não acertou nada: aponte para o caminhão ou para o chão e tente de novo."
+  "ponto_vazio": "A mira não acertou nada: aponte para o caminhão ou para o chão e tente de novo.",
+  "sem_osso": "Não achei a peça que move a plataforma neste modelo. Confira o mecanismo no cadastro."
 }
