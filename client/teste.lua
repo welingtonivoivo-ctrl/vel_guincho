@@ -100,3 +100,18 @@ RegisterNetEvent('vel_guincho:client:diag', function()
     lib.notify({ description = locale('diag_resultado', table.concat(linhas, ' · ')), type = melhor and 'success' or 'error', duration = 20000 })
     testando = false
 end)
+
+-- Teste do desvirar (/guinchocapotar): vira de rodas para cima o veículo mais perto (fora do caminhão)
+RegisterNetEvent('vel_guincho:client:capotar', function()
+    local v = lib.getClosestVehicle(GetEntityCoords(cache.ped), 8.0, false)
+    if not v then return lib.notify({ description = locale('capotar_nenhum'), type = 'error' }) end
+    local limite = GetGameTimer() + 2000
+    while not NetworkHasControlOfEntity(v) and GetGameTimer() < limite do
+        NetworkRequestControlOfEntity(v)
+        Wait(0)
+    end
+    local c = GetEntityCoords(v)
+    SetEntityCoordsNoOffset(v, c.x, c.y, c.z + 1.5, false, false, false)
+    SetEntityRotation(v, 0.0, 180.0, GetEntityHeading(v), 2, true)
+    lib.notify({ description = locale('capotado'), type = 'success' })
+end)

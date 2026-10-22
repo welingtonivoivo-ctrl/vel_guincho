@@ -50,3 +50,9 @@ function Guincho.log(source, acao, carro, c, patioId)
         pd and pd.citizenid, pd and pd.job and pd.job.name, acao, carro and GetVehicleNumberPlateText(carro) or nil, c and c.modelo, patioId,
     })
 end
+
+-- /guinchocapotar: vira o veículo mais perto (para testar o desvirar)
+lib.addCommand('guinchocapotar', { help = 'Vira de rodas para cima o veículo mais perto (teste do guincho)' }, function(source)
+    if not Guincho.admin(source) then return end
+    TriggerClientEvent('vel_guincho:client:capotar', source)
+end)

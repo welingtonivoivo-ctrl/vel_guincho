@@ -57,5 +57,7 @@
   "nao_tombado": "Esse carro não está tombado.",
   "tombado": "Carro tombado: engate pelo meio para desvirar.",
   "desvirar_segure": "Segure G para puxar e desvirar o carro",
-  "desvirado": "Carro desvirado. O cabo voltou para o guincho."
+  "desvirado": "Carro desvirado. O cabo voltou para o guincho.",
+  "capotar_nenhum": "Nenhum veículo perto (até 8 m).",
+  "capotado": "Veículo capotado para o teste."
 }
