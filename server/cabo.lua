@@ -170,10 +170,12 @@ lib.callback.register('vel_guincho:desvirar:concluir', function(source, netCamin
     local caminhao = entidade(netCaminhao)
     local s = caminhao and Entity(caminhao).state.velCabo
     if not s or not s.desvirar then return false end
-    if GetPedInVehicleSeat(caminhao, -1) ~= GetPlayerPed(source) then return false end
+    local motorista = GetPedInVehicleSeat(caminhao, -1) == GetPlayerPed(source)
+    if not motorista and (not Guincho.podeOperar(source, cadastroDe(caminhao)) or distancia(source, caminhao) > 10.0) then return false end
     local carro = entidade(s.carro)
     if not carro or tombado(carro) then return false end
     Guincho.log(source, 'desvirou', carro, cadastroDe(caminhao))
-    definir(caminhao, nil)
+    s.desvirar = nil
+    definir(caminhao, s)
     return true
 end)

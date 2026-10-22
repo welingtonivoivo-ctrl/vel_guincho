@@ -53,6 +53,8 @@ local function pontoDoCarro(carro, ponto)
     return GetOffsetFromEntityInWorldCoords(carro, 0.0, y, min.z + 0.45)
 end
 
+GuinchoCabo = { motorNoMundo = motorNoMundo }
+
 local function caboMax(c)
     return Config.Cabo[c.cabo] or 15.0
 end

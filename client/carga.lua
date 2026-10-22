@@ -9,6 +9,7 @@ local VELOCIDADE = 0.7 -- m/s do carro sendo puxado
 local ALAVANCA = { dict = 'anim@scripted@heist@ig2_hand_lever@male@', clip = 'idle' }
 local ancoras = {}     -- [caminhão] = objeto preso à peça da plataforma
 local operando = false
+local desvirarPelaCaixa -- definida mais abaixo (usada pelas opções da caixa de comando)
 
 local function notificar(chave, tipo)
     lib.notify({ title = locale('painel_titulo'), description = locale(chave), type = tipo or 'error' })
@@ -167,6 +168,14 @@ function GuinchoCarga.opcoes(caminhao, c)
             end,
             onSelect = function(data) CreateThread(function() operar(data.entity or caminhao, 'descer') end) end,
         },
+        {
+            name = 'vel_guincho_desvirar', icon = 'fa-solid fa-car-burst', label = locale('desvirar_caixa'), distance = 2.0, offsetAbsolute = onde,
+            canInteract = function(ent)
+                local s = Entity(ent).state.velCabo
+                return not operando and s and s.desvirar and not s.fase
+            end,
+            onSelect = function(data) CreateThread(function() desvirarPelaCaixa(data.entity or caminhao) end) end,
+        },
     }
 end
 
@@ -201,7 +210,7 @@ CreateThread(function()
         local v = cache.vehicle
         if v and cache.seat == -1 then
             local s = Entity(v).state.velCabo
-            if s and s.carro and not s.carga then
+            if s and s.carro and not s.carga and not s.desvirar then
                 espera = 0
                 DisableControlAction(0, 71, true) -- acelerar
                 DisableControlAction(0, 72, true) -- frear / ré
@@ -215,59 +224,72 @@ CreateThread(function()
     end
 end)
 
--- Desvirar: o motorista segura G e o cabo gira o carro tombado até ficar de pé ----------------
+-- Desvirar: com o cabo engatado no carro tombado, o caminhão anda e o cabo, ao esticar, puxa e gira
+-- o carro até ficar de pé (cerca de 1,5 m de cabo puxado). O cabo continua engatado: o operador solta à mão.
 
-local PUXAR = 47        -- G
-local GIRO = 35.0       -- graus por segundo
-local erguido = {}      -- [carro] = true depois de subir 60 cm para girar sem raspar no chão
+local PUXAO = 1.5       -- metros de cabo esticado para o carro ficar de pé
+local base = {}         -- [carro] = { dist, rot } quando o cabo foi engatado (cabo ainda frouxo)
 
-local function desvirarAgora(caminhao, carro)
-    if not controlar(carro) then return end
-    local r = GetEntityRotation(carro, 2)
-    local passo = GIRO * GetFrameTime()
-    local function chegar(a) return math.abs(a) <= passo and 0.0 or (a - passo * (a > 0 and 1 or -1)) end
-    local x, y = chegar(r.x), chegar(r.y)
+---Gira o carro de rot0 (tombado) para de pé conforme o progresso (0 a 1); no fim assenta e avisa o servidor.
+local function girar(caminhao, carro, rot0, progresso)
+    if not controlar(carro) then return false end
     FreezeEntityPosition(carro, true)
-    if not erguido[carro] then
-        erguido[carro] = true
-        local c = GetEntityCoords(carro)
-        SetEntityCoordsNoOffset(carro, c.x, c.y, c.z + 0.6, false, false, false)
+    SetEntityRotation(carro, rot0.x * (1.0 - progresso), rot0.y * (1.0 - progresso), rot0.z, 2, true)
+    if progresso < 1.0 then return false end
+    base[carro] = nil
+    FreezeEntityPosition(carro, false)
+    SetVehicleOnGroundProperly(carro)
+    if lib.callback.await('vel_guincho:desvirar:concluir', false, NetworkGetNetworkIdFromEntity(caminhao)) then
+        PlaySoundFrontend(-1, 'Hook_Engage', 'DLC_IE_Steal_Cargobob_Sounds', true)
+        notificar('desvirado', 'success')
     end
-    SetEntityRotation(carro, x, y, r.z, 2, true)
-    if math.abs(x) < 1.0 and math.abs(y) < 1.0 then
-        erguido[carro] = nil
-        FreezeEntityPosition(carro, false)
-        SetVehicleOnGroundProperly(carro)
-        if lib.callback.await('vel_guincho:desvirar:concluir', false, NetworkGetNetworkIdFromEntity(caminhao)) then
-            PlaySoundFrontend(-1, 'Hook_Detach', 'DLC_IE_Steal_Cargobob_Sounds', true)
-            notificar('desvirado', 'success')
-        end
-        return true
+    return true
+end
+
+local function desvirarPeloCabo(caminhao, c, carro)
+    local motor = GuinchoCabo.motorNoMundo(caminhao, c)
+    if not motor then return end
+    local dist = #(motor - GetEntityCoords(carro))
+    local b = base[carro]
+    if not b then
+        base[carro] = { dist = dist, rot = GetEntityRotation(carro, 2) }
+        return
     end
+    local progresso = math.min(1.0, math.max(0.0, (dist - b.dist) / PUXAO))
+    if progresso <= 0.0 then return end
+    girar(caminhao, carro, b.rot, progresso)
+end
+
+---Pela caixa de comando: o guincho recolhe o cabo e o carro gira até ficar de pé (3 s).
+function desvirarPelaCaixa(caminhao)
+    if operando then return end
+    local s = Entity(caminhao).state.velCabo
+    local carro = s and s.desvirar and NetworkGetEntityFromNetworkId(s.carro)
+    if not carro or carro == 0 or not DoesEntityExist(carro) then return end
+    operando = true
+    alavanca(true)
+    local rot0 = GetEntityRotation(carro, 2)
+    local t0 = GetGameTimer()
+    while DoesEntityExist(carro) do
+        local progresso = math.min(1.0, (GetGameTimer() - t0) / 3000)
+        if girar(caminhao, carro, rot0, progresso) then break end
+        if progresso >= 1.0 then FreezeEntityPosition(carro, false) break end
+        Wait(0)
+    end
+    alavanca(false)
+    operando = false
 end
 
 CreateThread(function()
-    local trilho = false
     while true do
         local espera = 500
         local v = cache.vehicle
         local s = v and cache.seat == -1 and Entity(v).state.velCabo
-        local ativo = s and s.desvirar
-        if ativo then
+        if s and s.desvirar then
             espera = 0
-            if not trilho then
-                trilho = true
-                SendNUIMessage({ action = 'placeHud', data = { mode = 'desvirar', texto = locale('desvirar_segure') } })
-            end
+            local c = cadastroDe(v)
             local carro = NetworkGetEntityFromNetworkId(s.carro)
-            if carro ~= 0 and DoesEntityExist(carro) and IsControlPressed(0, PUXAR) then
-                if desvirarAgora(v, carro) then Wait(500) end
-            elseif carro ~= 0 and DoesEntityExist(carro) and IsControlJustReleased(0, PUXAR) then
-                FreezeEntityPosition(carro, false)
-            end
-        elseif trilho then
-            trilho = false
-            SendNUIMessage({ action = 'placeHud', data = false })
+            if c and carro ~= 0 and DoesEntityExist(carro) then desvirarPeloCabo(v, c, carro) end
         end
         Wait(espera)
     end

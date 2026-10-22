@@ -56,8 +56,8 @@
   "engatar_lado": "Engatar para desvirar",
   "nao_tombado": "Esse carro não está tombado.",
   "tombado": "Carro tombado: engate pelo meio para desvirar.",
-  "desvirar_segure": "Segure G para puxar e desvirar o carro",
-  "desvirado": "Carro desvirado. O cabo voltou para o guincho.",
+  "desvirado": "Carro desvirado. Solte o cabo do carro para seguir.",
   "capotar_nenhum": "Nenhum veículo perto (até 8 m).",
-  "capotado": "Veículo capotado para o teste."
+  "capotado": "Veículo capotado para o teste.",
+  "desvirar_caixa": "Puxar cabo para desvirar o carro"
 }

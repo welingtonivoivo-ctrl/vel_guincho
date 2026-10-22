@@ -56,8 +56,8 @@
   "engatar_lado": "Hook to flip upright",
   "nao_tombado": "That car is not overturned.",
   "tombado": "Overturned car: hook it in the middle to flip it.",
-  "desvirar_segure": "Hold G to pull and flip the car",
-  "desvirado": "Car flipped upright. The cable went back to the winch.",
+  "desvirado": "Car flipped upright. Unhook the cable to continue.",
   "capotar_nenhum": "No vehicle nearby (8 m).",
-  "capotado": "Vehicle flipped for the test."
+  "capotado": "Vehicle flipped for the test.",
+  "desvirar_caixa": "Winch in to flip the car"
 }
