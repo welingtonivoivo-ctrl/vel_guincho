@@ -32,11 +32,11 @@ RegisterNetEvent('vel_guincho:client:testarPlataforma', function(mecanismo, maxi
     testando = true
     lib.notify({ description = locale('testando', mecanismo, math.floor(maximo * 100)), type = 'inform' })
     -- caminhão parado (freio + sapatas): a plataforma empurrando o chão não arrasta nem lança o caminhão
-    FreezeEntityPosition(veiculo, true)
+    if Plataforma.travar(mecanismo) then FreezeEntityPosition(veiculo, true) end
     animar(veiculo, mecanismo, 0.0, maximo)
     Wait(1500)
     animar(veiculo, mecanismo, maximo, 0.0)
-    FreezeEntityPosition(veiculo, false)
+    if Plataforma.travar(mecanismo) then FreezeEntityPosition(veiculo, false) end
     testando = false
     lib.notify({ description = locale('teste_fim', mecanismo), type = 'success' })
 end)

@@ -8,6 +8,11 @@ Plataforma = {}
 
 Plataforma.mecanismos = { 'fixa', 'garfo', 'braco', 'escavadeira' }
 
+---Mecanismos em que a plataforma empurra o chão ao descer: o caminhão fica travado enquanto ela se move.
+function Plataforma.travar(mecanismo)
+    return mecanismo == 'escavadeira'
+end
+
 -- Peças que costumam ser a plataforma nos modelos de guincho
 local CANDIDATOS = {
     'forks', 'carriage', 'mast', 'arm', 'towtruck_rear', 'misc_a', 'misc_b', 'misc_c', 'misc_d', 'misc_e',
@@ -21,6 +26,8 @@ local CANDIDATOS = {
 function Plataforma.mover(veiculo, mecanismo, pos)
     -- o jogo só aplica a peça móvel para quem controla o veículo na rede (fora da cabine não controla)
     if not NetworkHasControlOfEntity(veiculo) then NetworkRequestControlOfEntity(veiculo) end
+    -- sem ninguém na cabine a física do caminhão "dorme" e as peças móveis param de atualizar
+    ActivatePhysics(veiculo)
     if mecanismo == 'garfo' then
         SetForkliftForkHeight(veiculo, pos)
     elseif mecanismo == 'braco' then
@@ -49,7 +56,7 @@ function Plataforma.detectarOsso(veiculo, mecanismo, maximo)
         if i then antes[nome] = { i = i, p = GetWorldPositionOfEntityBone(veiculo, i) } end
     end
     if not next(antes) then return nil end
-    FreezeEntityPosition(veiculo, true)
+    if Plataforma.travar(mecanismo) then FreezeEntityPosition(veiculo, true) end
     local alvo = math.max(0.4, (maximo or 1.0) * 0.6)
     -- a peça anda no ritmo do jogo: segue pedindo a posição até 4 s
     local inicio = GetGameTimer()
@@ -70,7 +77,7 @@ function Plataforma.detectarOsso(veiculo, mecanismo, maximo)
         Wait(0)
     end
     Plataforma.mover(veiculo, mecanismo, 0.0)
-    FreezeEntityPosition(veiculo, false)
+    if Plataforma.travar(mecanismo) then FreezeEntityPosition(veiculo, false) end
     return melhor
 end
 

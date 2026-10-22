@@ -73,7 +73,8 @@ local function moverPlataforma(caminhao, mecanismo, de, ate)
         NetworkRequestControlOfEntity(caminhao)
         Wait(0)
     end
-    FreezeEntityPosition(caminhao, true)
+    local travar = Plataforma.travar(mecanismo)
+    if travar then FreezeEntityPosition(caminhao, true) end
     local inicio = GetGameTimer()
     while true do
         local t = math.min(1.0, (GetGameTimer() - inicio) / Config.TempoPlataforma)
@@ -81,7 +82,7 @@ local function moverPlataforma(caminhao, mecanismo, de, ate)
         if t >= 1.0 then break end
         Wait(0)
     end
-    if ate == 0.0 then FreezeEntityPosition(caminhao, false) end
+    if travar and ate == 0.0 then FreezeEntityPosition(caminhao, false) end
 end
 
 RegisterNUICallback('painel', function(body, cb)
