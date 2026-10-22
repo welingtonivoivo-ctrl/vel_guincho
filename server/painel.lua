@@ -83,6 +83,7 @@ function F.ponto(source, id, nome, d)
     -- relativo ao caminhão: um caminhão não passa de ~20 m
     local p = { x = numero(d.x, -20, 20), y = numero(d.y, -20, 20), z = numero(d.z, -10, 10) }
     if not (p.x and p.y and p.z) then return { erro = locale('pedido_invalido') } end
+    if nome ~= 'carga' and math.abs(p.x) + math.abs(p.y) + math.abs(p.z) < 0.05 then return { erro = locale('ponto_vazio') } end
     if d.h then p.h = numero(d.h, 0, 360) end
     local pontos = decodificar(MySQL.scalar.await('SELECT pontos FROM `vel_guincho_caminhoes` WHERE id = ?', { id }))
     pontos[nome] = p

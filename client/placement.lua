@@ -34,7 +34,7 @@ local function trackAim()
 	CreateThread(function()
 		while active do
 			local hit, _, coords = lib.raycast.fromCamera(1 | 2 | 16, 4, RAY_DISTANCE)
-			aim.coords = hit and coords or nil
+			aim.coords = (hit and coords and #coords > 1.0) and coords or nil
 		end
 	end)
 	return aim

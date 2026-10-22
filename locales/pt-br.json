@@ -24,5 +24,6 @@
   "ponto_caixa": "Caixa de comando",
   "ponto_carga": "Posição de carga",
   "ponto_rampa": "Início da rampa",
-  "ponto_engate": "Engate do gancho"
+  "ponto_engate": "Engate do gancho",
+  "ponto_vazio": "A mira não acertou nada: aponte para o caminhão ou para o chão e tente de novo."
 }

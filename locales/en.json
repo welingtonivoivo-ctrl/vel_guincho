@@ -24,5 +24,6 @@
   "ponto_caixa": "Control box",
   "ponto_carga": "Load position",
   "ponto_rampa": "Ramp start",
-  "ponto_engate": "Hook hitch"
+  "ponto_engate": "Hook hitch",
+  "ponto_vazio": "The aim hit nothing: point at the truck or the ground and try again."
 }

@@ -142,6 +142,15 @@ RegisterNUICallback('painelVer', function(d, cb)
     fechar()
     notificar(locale('vendo_pontos'), 'inform')
     CreateThread(function()
+        local fantasma
+        local carga = c.pontos.carga
+        if carga and pcall(lib.requestModel, joaat(CARRO_PREVIA), 5000) then
+            fantasma = CreateVehicle(joaat(CARRO_PREVIA), GetEntityCoords(caminhao), 0.0, false, false)
+            SetModelAsNoLongerNeeded(joaat(CARRO_PREVIA))
+            SetEntityAlpha(fantasma, 170, false)
+            SetEntityCollision(fantasma, false, false)
+            AttachEntityToEntity(fantasma, caminhao, 0, carga.x, carga.y, carga.z, 0.0, 0.0, carga.h or 0.0, false, false, false, false, 2, true)
+        end
         local fim = GetGameTimer() + 15000
         while GetGameTimer() < fim and DoesEntityExist(caminhao) do
             for nome, p in pairs(c.pontos) do
@@ -157,6 +166,7 @@ RegisterNUICallback('painelVer', function(d, cb)
             end
             Wait(0)
         end
+        if fantasma then DeleteEntity(fantasma) end
         reabrir()
     end)
 end)
