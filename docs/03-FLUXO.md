@@ -66,3 +66,11 @@ Em modelos cuja plataforma só obedece às teclas do motorista (ex.: `volvocbmes
    Cada ponto vira "Marcado ✓", com "Marcar de novo" e "Ver". Os pontos são salvos relativos ao caminhão.
 5. **Pátios:** "Nova área", marcada como caixa (`WorldPlacer.zone`) com nome. Cada pátio tem "Ir até lá" e "Remover".
 6. **Ir até lá / Remover** em tudo que tem lugar no mundo.
+
+## F. Guincho portátil (item)
+
+1. O jogador usa o item **Guincho portátil** perto de uma árvore, poste ou objeto. Mira no ponto com a bolinha e confirma. O motor aparece preso ali, e o item sai do inventário enquanto estiver montado.
+2. No motor: **[I] "Pegar cabo"**. O gancho vai para a mão, com o cabo até o motor (limite do cabo médio).
+3. No carro capotado: **[I] "Engatar para desvirar"**.
+4. No motor: **[I] "Puxar cabo para desvirar"**. O carro rola na direção do motor até ficar de pé, e o item perde 1 uso.
+5. **[I] "Soltar cabo"** no carro e **[I] "Recolher guincho"** no motor. O item volta para o inventário com os usos restantes. Com 0 usos, ele quebra e some.

@@ -51,3 +51,9 @@ Um guincho **imersivo**, configurado no painel admin, que funcione em **qualquer
 ## Critério de pronto (v1)
 
 Os 6 modelos guincham, rebocam e desviram em jogo, sincronizados entre dois jogadores, sem carro caindo da plataforma. A entrega no pátio aparece para a polícia, e tudo é configurável pelo painel.
+
+## Adendo (22/10/2026, aprovado pelo dono)
+
+13. **Guincho portátil (item `guincho_portatil`):** motor de guincho (modelo `prop_bison_winch`) que qualquer jogador com o item fixa numa árvore, poste ou objeto. Estica o cabo até um carro capotado e desvira, igual aos caminhões. Só desvira (não arrasta). Desgasta: 10 desviradas e quebra. Vendido pelas mecânicas.
+14. **Caminhões de cambão** (arrastam o carro: `towtruck`, `towtruck2`) **não têm** o sistema de desvirar. O mecânico que usa cambão precisa do guincho portátil.
+15. O desvirar rola o carro **na direção do cabo**.

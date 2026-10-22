@@ -9,6 +9,7 @@
 | 5 | Plataforma que inclina: inclinar, puxar, recolher, descer | `volvocbmesp` e `delivery11cmm` |
 | 6 | Gancho: engate automático na ré e soltar | `towtruck` reboca e solta |
 | 7 | Desvirar | Capotar um carro e desvirar |
+| 7B | Guincho portátil: item, prop fixado em árvore ou objeto, cabo, desvirar, desgaste de 10 usos, venda nas mecânicas | Fixar numa árvore e desvirar um carro |
 | 8 | Pátio: zonas no painel, entrega, aviso, log | Entregar no pátio e o policial apreender pelo mri_Qgarage |
 | 9 | Polimento AAA (sons, tempos, trilho), `mri-resource-check`, README e `TESTES-DONO.md` | Teste geral |
 | — | **Fim da v1**: relatório para a MRI, com o pedido de export de apreensão no `mri_Qgarage` | |
