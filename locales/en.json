@@ -1,0 +1,8 @@
+{
+  "cmd_teste": "Tests the bed of the truck you are in (optional mechanism: garfo, braco, escavadeira)",
+  "mecanismo_invalido": "Invalid mechanism. Use: fixa, garfo, braco or escavadeira.",
+  "entre_caminhao": "Get in the truck to test the bed.",
+  "plataforma_fixa": "%s is set up with a fixed bed. To try another mechanism: /guinchoteste garfo (or braco, escavadeira).",
+  "testando": "Testing the bed (mechanism: %s)...",
+  "teste_fim": "Test finished (mechanism: %s). Did the bed move?"
+}

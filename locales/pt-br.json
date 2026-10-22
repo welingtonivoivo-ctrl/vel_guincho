@@ -1,0 +1,8 @@
+{
+  "cmd_teste": "Testa a plataforma do caminhão em que você está (mecanismo opcional: garfo, braco, escavadeira)",
+  "mecanismo_invalido": "Mecanismo inválido. Use: fixa, garfo, braco ou escavadeira.",
+  "entre_caminhao": "Entre no caminhão para testar a plataforma.",
+  "plataforma_fixa": "%s está cadastrado com plataforma fixa. Para testar outro mecanismo: /guinchoteste garfo (ou braco, escavadeira).",
+  "testando": "Testando a plataforma (mecanismo: %s)...",
+  "teste_fim": "Teste terminado (mecanismo: %s). A plataforma se moveu?"
+}
