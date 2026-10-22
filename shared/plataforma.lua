@@ -72,6 +72,9 @@ function Plataforma.detectarOsso(veiculo, mecanismo, maximo)
     return melhor
 end
 
+-- Peça (índice do osso) em que cada âncora está presa
+Plataforma.ancoraOsso = {}
+
 ---Objeto invisível preso ao osso, para converter posições do mundo <-> relativas à plataforma.
 ---Quem chama apaga com DeleteEntity.
 function Plataforma.ancora(veiculo, ossoIndice)
@@ -83,5 +86,6 @@ function Plataforma.ancora(veiculo, ossoIndice)
     SetEntityVisible(obj, false, false)
     SetEntityCollision(obj, false, false)
     AttachEntityToEntity(obj, veiculo, ossoIndice, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+    Plataforma.ancoraOsso[obj] = ossoIndice
     return obj
 end

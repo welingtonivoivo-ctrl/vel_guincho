@@ -176,10 +176,35 @@ function GuinchoPlacer.here()
 	return result
 end
 
+-- Posição e giro de `ent` (preso ao caminhão) convertidos para relativos à peça onde `anchor` está presa.
+-- O giro de uma peça pode ser qualquer um (ex.: 90° de lado), então ajusta prendendo e conferindo no mundo.
+local function wrap(a) return (a + 180.0) % 360.0 - 180.0 end
+local function relativeToAnchor(ent, anchor)
+	Wait(0)
+	local alvo = GetEntityCoords(ent)
+	local alvoRot = GetEntityRotation(ent, 2)
+	local o = GetOffsetFromEntityGivenWorldCoords(anchor, alvo.x, alvo.y, alvo.z)
+	local ar = GetEntityRotation(anchor, 2)
+	local rot = vec3(wrap(alvoRot.x - ar.x), wrap(alvoRot.y - ar.y), wrap(alvoRot.z - ar.z))
+	local parent, idx = GetEntityAttachedTo(anchor), Plataforma.ancoraOsso[anchor] or 0
+	for _ = 1, 6 do
+		AttachEntityToEntity(ent, parent, idx, o.x, o.y, o.z, rot.x, rot.y, rot.z, false, false, false, false, 2, true)
+		Wait(0)
+		local agora = GetEntityRotation(ent, 2)
+		local d = vec3(wrap(alvoRot.x - agora.x), wrap(alvoRot.y - agora.y), wrap(alvoRot.z - agora.z))
+		if math.abs(d.x) + math.abs(d.y) + math.abs(d.z) < 0.5 then break end
+		rot = rot + d
+	end
+	local r = function(v) return math.floor(v * 1000 + 0.5) / 1000 end
+	return { x = r(o.x), y = r(o.y), z = r(o.z), rx = r(rot.x), ry = r(rot.y), rz = r(rot.z) }
+end
+
 ---Carro-fantasma preso ao caminhão, já no centro: ↑ ↓ anda na plataforma, Shift + ↑ ↓ sobe e desce,
----← → gira, E confirma. Devolve o deslocamento relativo ao caminhão (sempre centralizado em X).
----@param opts { vehicle: string|number, truck: number, bone?: number, start?: { y: number, z: number, h: number } }
----@return { x: number, y: number, z: number, h: number }|nil
+---← → gira, E confirma. Devolve o deslocamento relativo ao caminhão (sempre centralizado em X) e, com
+---`anchor` (objeto preso à peça da plataforma), também relativo à peça em `b` (posição e giro), para o
+---carro acompanhar a plataforma quando ela inclina.
+---@param opts { vehicle: string|number, truck: number, anchor?: number, start?: { y: number, z: number, h: number } }
+---@return { x: number, y: number, z: number, h: number, b?: table }|nil
 function GuinchoPlacer.onTruck(opts)
 	if active then return nil end
 	local truck = opts.truck
@@ -189,11 +214,9 @@ function GuinchoPlacer.onTruck(opts)
 	local min, max = GetModelDimensions(GetEntityModel(truck))
 	local cmin = GetModelDimensions(GetEntityModel(ghost))
 	local s = opts.start or {}
-	-- começo: metade de trás do caminhão, rodas na altura do topo do chassi
-	local bone = opts.bone or 0
-	-- preso à peça da plataforma: começa em cima da origem dela; preso ao caminhão: metade de trás
-	local y = tonumber(s.y) or (opts.bone and 0.0 or (min.y * 0.35))
-	local z = tonumber(s.z) or (opts.bone and (0.3 - cmin.z) or ((min.z + max.z) * 0.5 - cmin.z))
+	-- começo: o que já estava marcado, ou metade de trás do caminhão com as rodas no topo do chassi
+	local y = tonumber(s.y) or (min.y * 0.35)
+	local z = tonumber(s.z) or ((min.z + max.z) * 0.5 - cmin.z)
 	local h = tonumber(s.h) or 0.0
 	active = true
 	hud({ mode = 'carga' })
@@ -210,7 +233,7 @@ function GuinchoPlacer.onTruck(opts)
 		if IsControlPressed(0, KEY.left) then h = h + ROTATE_SPEED * frame end
 		if IsControlPressed(0, KEY.right) then h = h - ROTATE_SPEED * frame end
 		h = h % 360
-		AttachEntityToEntity(ghost, truck, bone, 0.0, y, z, 0.0, 0.0, h, false, false, false, false, 2, true)
+		AttachEntityToEntity(ghost, truck, 0, 0.0, y, z, 0.0, 0.0, h, false, false, false, false, 2, true)
 		if IsControlJustPressed(0, KEY.mark) then
 			PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
 			local r = function(v) return math.floor(v * 1000 + 0.5) / 1000 end
@@ -225,6 +248,9 @@ function GuinchoPlacer.onTruck(opts)
 	end
 	active = false
 	hud(false)
+	if result and opts.anchor and DoesEntityExist(opts.anchor) then
+		result.b = relativeToAnchor(ghost, opts.anchor)
+	end
 	DeleteEntity(ghost)
 	return result
 end

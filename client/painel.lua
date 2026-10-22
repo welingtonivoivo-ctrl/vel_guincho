@@ -129,9 +129,8 @@ RegisterNUICallback('painelMarcar', function(d, cb)
         if inclinada then moverPlataforma(caminhao, c.plataforma, 0.0, maximo) end
         local dado
         if regra.ferramenta == 'carro' then
-            local antiga = c.pontos.carga
-            local inicio = antiga and antiga.osso == osso and antiga or nil
-            dado = GuinchoPlacer.onTruck({ vehicle = CARRO_PREVIA, truck = caminhao, bone = ossoIndice, start = inicio })
+            -- ajusta preso ao caminhão (x,y,z,h); com âncora devolve também relativo à peça (b)
+            dado = GuinchoPlacer.onTruck({ vehicle = CARRO_PREVIA, truck = caminhao, anchor = ancora, start = c.pontos.carga })
         else
             local r = regra.ferramenta == 'aqui' and GuinchoPlacer.here() or GuinchoPlacer.point({})
             dado = r and relativo(base, r.coords, r.heading)
@@ -176,8 +175,13 @@ RegisterNUICallback('painelVer', function(d, cb)
             SetModelAsNoLongerNeeded(joaat(CARRO_PREVIA))
             SetEntityAlpha(fantasma, 170, false)
             SetEntityCollision(fantasma, false, false)
-            local osso = Plataforma.osso(caminhao, carga.osso) or 0
-            AttachEntityToEntity(fantasma, caminhao, osso, carga.x, carga.y, carga.z, 0.0, 0.0, carga.h or 0.0, false, false, false, false, 2, true)
+            local osso = carga.b and Plataforma.osso(caminhao, carga.osso)
+            if osso then
+                local b = carga.b
+                AttachEntityToEntity(fantasma, caminhao, osso, b.x, b.y, b.z, b.rx, b.ry, b.rz, false, false, false, false, 2, true)
+            else
+                AttachEntityToEntity(fantasma, caminhao, 0, carga.x, carga.y, carga.z, 0.0, 0.0, carga.h or 0.0, false, false, false, false, 2, true)
+            end
         end
         local fim = GetGameTimer() + 15000
         while GetGameTimer() < fim and DoesEntityExist(caminhao) do
