@@ -114,5 +114,8 @@ function Plataforma.ancora(veiculo, ossoIndice)
     SetEntityCollision(obj, false, false)
     AttachEntityToEntity(obj, veiculo, ossoIndice, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
     Plataforma.ancoraOsso[obj] = ossoIndice
+    -- o jogo só põe o objeto preso no lugar no quadro seguinte: antes disso a posição lida é a antiga
+    Wait(0)
+    Wait(0)
     return obj
 end
