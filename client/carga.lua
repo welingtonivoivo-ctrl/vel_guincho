@@ -215,6 +215,64 @@ CreateThread(function()
     end
 end)
 
+-- Desvirar: o motorista segura G e o cabo gira o carro tombado até ficar de pé ----------------
+
+local PUXAR = 47        -- G
+local GIRO = 35.0       -- graus por segundo
+local erguido = {}      -- [carro] = true depois de subir 60 cm para girar sem raspar no chão
+
+local function desvirarAgora(caminhao, carro)
+    if not controlar(carro) then return end
+    local r = GetEntityRotation(carro, 2)
+    local passo = GIRO * GetFrameTime()
+    local function chegar(a) return math.abs(a) <= passo and 0.0 or (a - passo * (a > 0 and 1 or -1)) end
+    local x, y = chegar(r.x), chegar(r.y)
+    FreezeEntityPosition(carro, true)
+    if not erguido[carro] then
+        erguido[carro] = true
+        local c = GetEntityCoords(carro)
+        SetEntityCoordsNoOffset(carro, c.x, c.y, c.z + 0.6, false, false, false)
+    end
+    SetEntityRotation(carro, x, y, r.z, 2, true)
+    if math.abs(x) < 1.0 and math.abs(y) < 1.0 then
+        erguido[carro] = nil
+        FreezeEntityPosition(carro, false)
+        SetVehicleOnGroundProperly(carro)
+        if lib.callback.await('vel_guincho:desvirar:concluir', false, NetworkGetNetworkIdFromEntity(caminhao)) then
+            PlaySoundFrontend(-1, 'Hook_Detach', 'DLC_IE_Steal_Cargobob_Sounds', true)
+            notificar('desvirado', 'success')
+        end
+        return true
+    end
+end
+
+CreateThread(function()
+    local trilho = false
+    while true do
+        local espera = 500
+        local v = cache.vehicle
+        local s = v and cache.seat == -1 and Entity(v).state.velCabo
+        local ativo = s and s.desvirar
+        if ativo then
+            espera = 0
+            if not trilho then
+                trilho = true
+                SendNUIMessage({ action = 'placeHud', data = { mode = 'desvirar', texto = locale('desvirar_segure') } })
+            end
+            local carro = NetworkGetEntityFromNetworkId(s.carro)
+            if carro ~= 0 and DoesEntityExist(carro) and IsControlPressed(0, PUXAR) then
+                if desvirarAgora(v, carro) then Wait(500) end
+            elseif carro ~= 0 and DoesEntityExist(carro) and IsControlJustReleased(0, PUXAR) then
+                FreezeEntityPosition(carro, false)
+            end
+        elseif trilho then
+            trilho = false
+            SendNUIMessage({ action = 'placeHud', data = false })
+        end
+        Wait(espera)
+    end
+end)
+
 AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     for _, a in pairs(ancoras) do if DoesEntityExist(a) then DeleteEntity(a) end end

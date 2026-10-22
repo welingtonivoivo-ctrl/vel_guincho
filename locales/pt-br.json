@@ -52,5 +52,10 @@
   "sem_pontos": "Este caminhão ainda não tem a posição de carga e a rampa marcadas no painel.",
   "incline_primeiro": "Incline a plataforma pela cabine antes de puxar ou descer o carro.",
   "falhou_carga": "Não deu para mover o carro. Tente de novo.",
-  "caminhao_freado": "Cabo engatado: solte o cabo ou carregue o carro antes de sair."
+  "caminhao_freado": "Cabo engatado: solte o cabo ou carregue o carro antes de sair.",
+  "engatar_lado": "Engatar para desvirar",
+  "nao_tombado": "Esse carro não está tombado.",
+  "tombado": "Carro tombado: engate pelo meio para desvirar.",
+  "desvirar_segure": "Segure G para puxar e desvirar o carro",
+  "desvirado": "Carro desvirado. O cabo voltou para o guincho."
 }

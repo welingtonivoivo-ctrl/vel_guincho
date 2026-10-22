@@ -41,7 +41,13 @@ local function motorNoMundo(veiculo, c)
 end
 
 ---Ponto de engate do carro (frente ou traseira, perto do chão, no centro).
+---Carro de lado ou de rodas para cima.
+function GuinchoTombado(carro)
+    return IsEntityUpsidedown(carro) or math.abs(GetEntityRoll(carro)) > 60.0 or math.abs(GetEntityPitch(carro)) > 60.0
+end
+
 local function pontoDoCarro(carro, ponto)
+    if ponto == 'lado' then return GetEntityCoords(carro) end
     local min, max = GetModelDimensions(GetEntityModel(carro))
     local y = ponto == 'frente' and (max.y - 0.15) or (min.y + 0.15)
     return GetOffsetFromEntityInWorldCoords(carro, 0.0, y, min.z + 0.45)
@@ -128,14 +134,17 @@ local function pontoEngatado(carro)
 end
 
 -- No meio do para-choque da frente e no de trás (offset em proporção da caixa do modelo)
-local PONTAS = { frente = vec3(0.5, 1.0, 0.35), tras = vec3(0.5, 0.0, 0.35) }
+local PONTAS = { frente = vec3(0.5, 1.0, 0.35), tras = vec3(0.5, 0.0, 0.35), lado = vec3(0.5, 0.5, 0.5) }
 local OPCOES_CARRO = {}
 
 CreateThread(function()
     for ponto, offset in pairs(PONTAS) do
         OPCOES_CARRO[#OPCOES_CARRO + 1] = {
             name = 'vel_guincho_engatar_' .. ponto, icon = 'fa-solid fa-link', label = locale('engatar_' .. ponto), distance = 2.0, offset = offset,
-            canInteract = function(ent) return meuCabo ~= nil and ent ~= meuCabo and not caminhaoDoCarro(ent) end,
+            canInteract = function(ent)
+                -- carro tombado: só "para desvirar" (no meio do carro); em pé: frente ou traseira
+                return meuCabo ~= nil and ent ~= meuCabo and not caminhaoDoCarro(ent) and (ponto == 'lado') == GuinchoTombado(ent)
+            end,
             onSelect = function(data) CreateThread(function() engatar(data.entity, ponto) end) end,
         }
         OPCOES_CARRO[#OPCOES_CARRO + 1] = {

@@ -52,5 +52,10 @@
   "sem_pontos": "This truck has no load position and ramp marked in the panel yet.",
   "incline_primeiro": "Tilt the bed from the cab before pulling or lowering the car.",
   "falhou_carga": "Could not move the car. Try again.",
-  "caminhao_freado": "Cable hooked: release it or load the car before driving off."
+  "caminhao_freado": "Cable hooked: release it or load the car before driving off.",
+  "engatar_lado": "Hook to flip upright",
+  "nao_tombado": "That car is not overturned.",
+  "tombado": "Overturned car: hook it in the middle to flip it.",
+  "desvirar_segure": "Hold G to pull and flip the car",
+  "desvirado": "Car flipped upright. The cable went back to the winch."
 }
