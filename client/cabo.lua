@@ -34,6 +34,7 @@ end
 
 ---Ponto do motor do guincho no mundo, agora.
 local function motorNoMundo(veiculo, c)
+    if c.tipo == 'portatil' then return GuinchoPortatil.motor(veiculo) end
     local m = c.pontos.motor
     if not m then return nil end
     local base = ancoraDe(veiculo, c) or veiculo
@@ -79,12 +80,11 @@ end
 -- Interact ---------------------------------------------------------------
 
 local function opcoesCaminhao(veiculo, c)
-    local motor = c.pontos.motor
-    if not motor then return nil end
+    if not c.pontos.motor and c.tipo ~= 'portatil' then return nil end
     -- posição do motor relativa ao caminhão neste momento (plataforma como está agora)
     local w = motorNoMundo(veiculo, c)
     local o = GetOffsetFromEntityGivenWorldCoords(veiculo, w.x, w.y, w.z)
-    return {
+    local opcoes = {
         {
             name = 'vel_guincho_pegar', icon = 'fa-solid fa-link', label = locale('pegar_cabo'), distance = 2.0,
             offsetAbsolute = vec3(o.x, o.y, o.z),
@@ -106,8 +106,14 @@ local function opcoesCaminhao(veiculo, c)
                 lib.callback.await('vel_guincho:cabo:devolver', false, NetworkGetNetworkIdFromEntity(data.entity or veiculo))
             end,
         },
-        table.unpack(GuinchoCarga.opcoes(veiculo, c)),
     }
+    -- caixa de comando (caminhões) ou, no portátil, o próprio motor: desvirar e recolher
+    local extras = GuinchoCarga.opcoes(veiculo, c, vec3(o.x, o.y, o.z))
+    if c.tipo == 'portatil' then
+        for _, op in ipairs(GuinchoPortatil.opcoes(veiculo, vec3(o.x, o.y, o.z))) do extras[#extras + 1] = op end
+    end
+    for _, op in ipairs(extras) do opcoes[#opcoes + 1] = op end
+    return opcoes
 end
 
 ---Caminhão cujo cabo está engatado neste carro (procura nos caminhões por perto).
@@ -183,7 +189,10 @@ CreateThread(function()
             name = 'vel_guincho_engatar_' .. ponto, icon = 'fa-solid fa-link', label = locale('engatar_' .. ponto), distance = 2.0, anchor = anchor,
             canInteract = function(ent)
                 -- carro tombado: só "para desvirar" (no meio do carro); em pé: frente ou traseira
-                return meuCabo ~= nil and ent ~= meuCabo and not caminhaoDoCarro(ent) and (ponto == 'lado') == GuinchoTombado(ent)
+                if meuCabo == nil or ent == meuCabo or caminhaoDoCarro(ent) then return false end
+                local info = caminhoes[meuCabo]
+                if info and info.c.tipo == 'portatil' and ponto ~= 'lado' then return false end
+                return (ponto == 'lado') == GuinchoTombado(ent)
             end,
             onSelect = function(data) CreateThread(function() engatar(data.entity, ponto) end) end,
         }
@@ -207,6 +216,10 @@ local function esquecer(veiculo)
     caminhoes[veiculo] = nil
 end
 
+-- Motores portáteis montados (netIds), mantidos pelo statebag global (sem ler o GlobalState a cada volta)
+local portateis = GlobalState.velPortateis or {}
+AddStateBagChangeHandler('velPortateis', 'global', function(_, _, valor) portateis = valor or {} end)
+
 local function varrer()
         local vivos = {}
         for _, v in ipairs(lib.getNearbyVehicles(GetEntityCoords(cache.ped), PERTO, true)) do
@@ -217,6 +230,21 @@ local function varrer()
                     caminhoes[v.vehicle] = { c = c }
                     local ops = opcoesCaminhao(v.vehicle, c)
                     if ops then exports.mri_Qinteract:addLocalEntity(v.vehicle, ops) end
+                end
+            end
+        end
+        local aqui = GetEntityCoords(cache.ped)
+        for _, net in ipairs(portateis) do
+            local obj = NetworkDoesNetworkIdExist(net) and NetworkGetEntityFromNetworkId(net) or 0
+            if obj ~= 0 and DoesEntityExist(obj) and #(GetEntityCoords(obj) - aqui) < PERTO then
+                local c = cadastroDe(obj)
+                if c and c.tipo == 'portatil' then
+                    vivos[obj] = true
+                    if not caminhoes[obj] then
+                        caminhoes[obj] = { c = c }
+                        local ops = opcoesCaminhao(obj, c)
+                        if ops then exports.mri_Qinteract:addLocalEntity(obj, ops) end
+                    end
                 end
             end
         end

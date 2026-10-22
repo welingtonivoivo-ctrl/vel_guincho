@@ -35,7 +35,8 @@ function F.dados()
         empregos[#empregos + 1] = { nome = nome, rotulo = j.label or nome }
     end
     table.sort(empregos, function(a, b) return a.rotulo < b.rotulo end)
-    return { caminhoes = lista, empregos = empregos, cabos = Config.Cabo }
+    return { caminhoes = lista, empregos = empregos, cabos = Config.Cabo, lojas = Banco.lojas(),
+        portatil = { preco = Config.Portatil.preco, usos = Config.Portatil.usos, empregos = Config.Portatil.empregosLoja } }
 end
 
 function F.novo(source, modelo, rotulo)
@@ -119,6 +120,30 @@ function F.remover(source, id)
     id = tonumber(id)
     if not id then return { erro = locale('pedido_invalido') } end
     MySQL.update.await('UPDATE `vel_guincho_caminhoes` SET ativo = 0, atualizado_por = ? WHERE id = ?', { quem(source), id })
+    Guincho.publicar()
+    return { msg = locale('removido') }
+end
+
+-- Balcões da loja do guincho portátil -------------------------------------------
+
+---Novo balcão onde o admin está em pé (coords vindas da ferramenta "aqui").
+function F.lojaNova(source, nome, d)
+    nome = type(nome) == 'string' and nome:gsub('^%s+', ''):gsub('%s+$', ''):sub(1, 64) or ''
+    if nome == '' or type(d) ~= 'table' then return { erro = locale('pedido_invalido') } end
+    local x, y, z = numero(d.x, -20000, 20000), numero(d.y, -20000, 20000), numero(d.z, -500, 3000)
+    if not (x and y and z) then return { erro = locale('pedido_invalido') } end
+    -- quem marca está no balcão: confere que a posição é a dele mesmo
+    if #(GetEntityCoords(GetPlayerPed(source)) - vec3(x, y, z)) > 5.0 then return { erro = locale('longe') } end
+    MySQL.insert.await('INSERT INTO `vel_guincho_lojas` (nome, coords, criado_por) VALUES (?, ?, ?)',
+        { nome, json.encode({ x = x, y = y, z = z, h = numero(d.h, 0, 360) or 0.0 }), quem(source) })
+    Guincho.publicar()
+    return { msg = locale('loja_salva', nome) }
+end
+
+function F.lojaRemover(source, id)
+    id = tonumber(id)
+    if not id then return { erro = locale('pedido_invalido') } end
+    MySQL.update.await('UPDATE `vel_guincho_lojas` SET ativo = 0, criado_por = ? WHERE id = ?', { quem(source), id })
     Guincho.publicar()
     return { msg = locale('removido') }
 end

@@ -59,3 +59,4 @@ Os 6 modelos guincham, rebocam e desviram em jogo, sincronizados entre dois joga
 15. O desvirar rola o carro **na direção do cabo**.
 16. **Aeronaves e tamanho máximo (22/10):** helicóptero e avião engatam pela fuselagem. Cada caminhão tem no painel um comprimento máximo (0 = sem limite) e se leva aeronave. A carga apoia a base de cada modelo no assoalho.
 17. **Desvirar só para quem é do emprego**, também dirigindo o caminhão.
+18. **Guincho portátil, decisões finais (22/10):** loja só para mecânicos (`mecanica_centro`, `mechanic`) em balcões marcados no painel (aba Guincho → "Guincho portátil · lojas"); preço R$ 2.500; o mecânico revende. Fixa só em superfície em pé (tronco, poste, parede) a até 2,5 m. Enquanto montado, o item sai do inventário; recolher devolve com os usos restantes (barra de desgaste do inventário). Só quem montou recolhe; se ele sair do jogo, qualquer um recolhe. Um guincho montado por jogador.

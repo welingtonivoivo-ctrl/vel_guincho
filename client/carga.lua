@@ -168,7 +168,20 @@ local function operar(caminhao, acao)
 end
 
 ---Opções da caixa de comando (somadas às do cabo no mesmo caminhão).
-function GuinchoCarga.opcoes(caminhao, c)
+function GuinchoCarga.opcoes(caminhao, c, motor)
+    -- guincho portátil: o comando é no próprio motor e só desvira
+    if c.tipo == 'portatil' then
+        return {
+            {
+                name = 'vel_guincho_desvirar', icon = 'fa-solid fa-car-burst', label = locale('desvirar_caixa'), distance = 2.0, offsetAbsolute = motor,
+                canInteract = function(ent)
+                    local s = Entity(ent).state.velCabo
+                    return not operando and s and s.desvirar and not s.fase
+                end,
+                onSelect = function(data) CreateThread(function() desvirarPelaCaixa(data.entity or caminhao) end) end,
+            },
+        }
+    end
     local caixa = c.pontos.caixa
     if not caixa or c.tipo ~= 'plataforma' then return {} end
     local onde = vec3(caixa.x, caixa.y, caixa.z + 1.0) -- marcada nos pés: o comando fica na altura da mão

@@ -25,6 +25,14 @@ local TABELAS = {
         `criado_por` VARCHAR(60) NULL,
         PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4]],
+    [[CREATE TABLE IF NOT EXISTS `vel_guincho_lojas` (
+        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `nome` VARCHAR(64) NOT NULL,
+        `coords` LONGTEXT NOT NULL,
+        `ativo` TINYINT(1) NOT NULL DEFAULT 1,
+        `criado_por` VARCHAR(60) NULL,
+        PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4]],
     [[CREATE TABLE IF NOT EXISTS `vel_guincho_log` (
         `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         `quando` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -64,6 +72,26 @@ function Banco.caminhoes()
             empregos = decodificar(r.empregos, {}), exigeServico = r.exige_servico == 1,
             cabo = Config.Cabo[r.cabo] and r.cabo or Config.CaboPadrao, pontos = decodificar(r.pontos, {}),
         }
+    end
+    return lista
+end
+
+---Guincho portátil: entra na lista como um "caminhão" (pelo modelo do motor) para o cabo e o
+---desvirar funcionarem igual. Qualquer um usa; o ponto do motor é calculado pelo modelo no cliente.
+function Banco.portatil()
+    local P = Config.Portatil
+    return {
+        id = 0, modelo = P.modelo, nome = 'Guincho portátil', tipo = 'portatil', livre = true,
+        empregos = {}, exigeServico = false, cabo = P.cabo, pontos = {},
+    }
+end
+
+---Balcões da loja do guincho portátil (marcados no painel).
+function Banco.lojas()
+    local lista = {}
+    for _, r in ipairs(MySQL.query.await('SELECT id, nome, coords FROM `vel_guincho_lojas` WHERE ativo = 1') or {}) do
+        local c = decodificar(r.coords, nil)
+        if c and c.x then lista[#lista + 1] = { id = r.id, nome = r.nome, coords = c } end
     end
     return lista
 end

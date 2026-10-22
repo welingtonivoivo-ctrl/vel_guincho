@@ -20,6 +20,7 @@ client_scripts {
     'client/teste.lua',
     'client/painel.lua',
     'client/carga.lua',
+    'client/portatil.lua',
     'client/cabo.lua',
 }
 
@@ -28,6 +29,7 @@ server_scripts {
     'server/banco.lua',
     'server/main.lua',
     'server/painel.lua',
+    'server/portatil.lua',
     'server/cabo.lua',
 }
 

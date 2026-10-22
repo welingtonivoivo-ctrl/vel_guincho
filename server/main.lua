@@ -3,7 +3,9 @@
 Guincho = {}
 
 function Guincho.publicar()
-    GlobalState.velGuincho = { caminhoes = Banco.caminhoes(), patios = Banco.patios() }
+    local caminhoes = Banco.caminhoes()
+    caminhoes[tostring(joaat(Config.Portatil.modelo))] = Banco.portatil()
+    GlobalState.velGuincho = { caminhoes = caminhoes, patios = Banco.patios(), lojas = Banco.lojas() }
 end
 
 function Guincho.admin(source)

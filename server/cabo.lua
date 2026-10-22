@@ -7,7 +7,10 @@ local ultimo = {}  -- [source] = GetGameTimer() (limite de pedidos)
 
 local function cadastroDe(entidade)
     local estado = GlobalState.velGuincho
-    return estado and estado.caminhoes and estado.caminhoes[tostring(GetEntityModel(entidade))]
+    local c = estado and estado.caminhoes and estado.caminhoes[tostring(GetEntityModel(entidade))]
+    -- o motor do guincho portátil só vale montado pelo sistema (não qualquer prop igual do mapa)
+    if c and c.tipo == 'portatil' and not Entity(entidade).state.velPortatil then return nil end
+    return c
 end
 
 local function entidade(netId)
@@ -21,7 +24,7 @@ end
 
 ---Emprego liberado no caminhão (e em serviço, se o cadastro pedir).
 function Guincho.podeOperar(source, c)
-    if Guincho.admin(source) then return true end
+    if c.livre or Guincho.admin(source) then return true end
     local p = exports.qbx_core:GetPlayer(source)
     local job = p and p.PlayerData and p.PlayerData.job
     if not job or not lib.table.contains(c.empregos or {}, job.name) then return false, 'sem_emprego' end
@@ -85,6 +88,9 @@ lib.callback.register('vel_guincho:cabo:engatar', function(source, netCaminhao, 
     if not s or s.mao ~= source or not carro or carro == caminhao or GetEntityType(carro) ~= 2 then return false end
     if ponto ~= 'frente' and ponto ~= 'tras' and ponto ~= 'lado' then return false end
     local c = cadastroDe(caminhao)
+    if not c then return false end
+    -- guincho portátil só desvira
+    if c.tipo == 'portatil' and ponto ~= 'lado' then return false, 'portatil_so_desvira' end
     -- medido do centro: aeronaves e carros longos têm as pontas a mais de 4 m do centro
     if distancia(source, carro) > 8.0 then return false, 'longe' end
     if #(GetEntityCoords(carro) - GetEntityCoords(caminhao)) > (Config.Cabo[c.cabo] or 15.0) + 8.0 then return false, 'cabo_curto' end
@@ -133,7 +139,7 @@ AddEventHandler('playerDropped', function()
 end)
 
 AddEventHandler('entityRemoved', function(e)
-    if GetEntityType(e) == 2 then comCabo[NetworkGetNetworkIdFromEntity(e)] = nil end
+    comCabo[NetworkGetNetworkIdFromEntity(e)] = nil
 end)
 
 -- Etapa 4/5: puxar o carro para a plataforma e descer. Quem pede anima o carro no próprio cliente
@@ -145,6 +151,7 @@ lib.callback.register('vel_guincho:carga:comando', function(source, netCaminhao,
     local s = caminhao and Entity(caminhao).state.velCabo
     if not s or not s.carro or s.fase then return false end
     local c = cadastroDe(caminhao)
+    if not c or c.tipo ~= 'plataforma' then return false end
     local ok, motivo = Guincho.podeOperar(source, c)
     if not ok then return false, motivo end
     if distancia(source, caminhao) > 10.0 then return false, 'longe' end
@@ -184,12 +191,14 @@ lib.callback.register('vel_guincho:desvirar:concluir', function(source, netCamin
     if not s or not s.desvirar then return false end
     -- sempre do emprego; o motorista pode estar longe da caixa, quem opera a pé tem que estar perto
     if not Guincho.podeOperar(source, cadastroDe(caminhao)) then return false end
-    local motorista = GetPedInVehicleSeat(caminhao, -1) == GetPlayerPed(source)
+    local motorista = GetEntityType(caminhao) == 2 and GetPedInVehicleSeat(caminhao, -1) == GetPlayerPed(source)
     if not motorista and distancia(source, caminhao) > 10.0 then return false end
     local carro = entidade(s.carro)
     if not carro or tombado(carro) then return false end
-    Guincho.log(source, 'desvirou', carro, cadastroDe(caminhao))
+    local c = cadastroDe(caminhao)
+    Guincho.log(source, 'desvirou', carro, c)
     s.desvirar = nil
     definir(caminhao, s)
+    if c and c.tipo == 'portatil' then Portatil.gastar(caminhao, source) end
     return true
 end)

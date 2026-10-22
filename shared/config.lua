@@ -28,3 +28,16 @@ Config.Semente = {
     { modelo = 'towtruck2', nome = 'Reboque pequeno (gancho)', tipo = 'gancho',
       empregos = { 'mecanica_centro', 'guincho_sp' } },
 }
+
+-- Guincho portátil (item): qualquer jogador fixa numa árvore, poste ou parede e desvira um carro.
+-- Desgasta: cada desvirada gasta 1 uso; sem usos, quebra e não volta para o inventário.
+-- Vendido numa loja só para os empregos abaixo (balcão marcado no painel), para o mecânico revender.
+Config.Portatil = {
+    item = 'guincho_portatil',
+    modelo = 'prop_bison_winch',
+    usos = 10,
+    cabo = 'medio',          -- comprimento do cabo (Config.Cabo)
+    alcance = 2.5,           -- distância máxima do jogador até onde fixa (m)
+    preco = 2500,
+    empregosLoja = { 'mecanica_centro', 'mechanic' },
+}

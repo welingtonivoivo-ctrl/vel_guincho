@@ -5,7 +5,7 @@
 local PLUGIN = 'vel_guincho'
 local PERTO = 15.0
 local CARRO_PREVIA = 'sultan'
-local PERMITIDAS = { dados = true, salvar = true, novo = true, remover = true }
+local PERMITIDAS = { dados = true, salvar = true, novo = true, remover = true, lojaRemover = true }
 
 -- Pontos que o painel marca e como cada um é marcado
 local PONTOS = {
@@ -233,4 +233,17 @@ end)
 RegisterNUICallback('painelFechar', function(_, cb)
     cb(1)
     fechar()
+end)
+
+-- Novo balcão da loja do guincho portátil ({ nome }): o admin fica em pé no balcão e aperta E
+RegisterNUICallback('painelLoja', function(d, cb)
+    cb(1)
+    local nome = type(d) == 'table' and type(d.nome) == 'string' and d.nome or ''
+    if nome == '' then return notificar(locale('loja_sem_nome'), 'error') end
+    noMundo(function()
+        local r = GuinchoPlacer.here()
+        if not r then return nil end
+        local c = r.coords
+        return lib.callback.await('vel_guincho:painel:lojaNova', false, nome, { x = c.x, y = c.y, z = c.z, h = r.heading })
+    end)
 end)
