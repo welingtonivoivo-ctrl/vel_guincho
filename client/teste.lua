@@ -72,27 +72,31 @@ RegisterNetEvent('vel_guincho:client:diag', function()
     if cache.vehicle then return lib.notify({ description = locale('diag_fora'), type = 'error' }) end
     local veiculo, c = caminhaoMaisPerto()
     if not veiculo or c.plataforma == 'fixa' then return lib.notify({ description = locale('diag_sem'), type = 'error' }) end
-    local osso = Plataforma.osso(veiculo, c.pontos.osso or Plataforma.detectarOsso(veiculo, c.plataforma, 1.0) or '')
+    local osso = Plataforma.osso(veiculo, c.pontos.osso or 'forks') or Plataforma.osso(veiculo, 'forks')
     if not osso then return lib.notify({ description = locale('sem_osso'), type = 'error' }) end
     testando = true
     FreezeEntityPosition(veiculo, false)
-    local r = {}
-    lib.notify({ description = locale('diag_teste', 1), type = 'inform' })
-    r[1] = medir(veiculo, c.plataforma, osso)
-    lib.notify({ description = locale('diag_teste', 2), type = 'inform' })
-    r[2] = medir(veiculo, c.plataforma, osso, function() SetVehicleEngineOn(veiculo, true, true, false) end,
-        function() SetVehicleEngineOn(veiculo, false, true, false) end)
-    lib.notify({ description = locale('diag_teste', 3), type = 'inform' })
     local motorista
-    r[3] = medir(veiculo, c.plataforma, osso, function()
+    local function comMotorista()
         local m = `s_m_y_fireman_01`
         lib.requestModel(m, 5000)
         motorista = CreatePedInsideVehicle(veiculo, 4, m, -1, false, false)
         SetModelAsNoLongerNeeded(m)
         SetEntityVisible(motorista, false, false)
         SetBlockingOfNonTemporaryEvents(motorista, true)
-    end, function() if motorista and DoesEntityExist(motorista) then DeleteEntity(motorista) end end)
-    for i = 1, 3 do print(('[vel_guincho] diagnóstico %d: a plataforma andou %.2f m'):format(i, r[i])) end
-    lib.notify({ description = locale('diag_resultado', r[1], r[2], r[3]), type = 'success', duration = 15000 })
+    end
+    local function semMotorista() if motorista and DoesEntityExist(motorista) then DeleteEntity(motorista) end motorista = nil end
+    local linhas, n, melhor = {}, 0, nil
+    for _, mec in ipairs({ 'garfo', 'braco', 'escavadeira' }) do
+        for _, motor in ipairs({ false, true }) do
+            n = n + 1
+            lib.notify({ description = locale('diag_teste', n), type = 'inform' })
+            local andou = medir(veiculo, mec, osso, motor and comMotorista or nil, motor and semMotorista or nil)
+            linhas[#linhas + 1] = ('%s%s = %.2f m'):format(mec, motor and ' + motorista' or '', andou)
+            print(('[vel_guincho] diagnóstico %s'):format(linhas[#linhas]))
+            if andou > 0.3 and (not melhor or (not motor and melhor.motor)) then melhor = { mec = mec, motor = motor } end
+        end
+    end
+    lib.notify({ description = locale('diag_resultado', table.concat(linhas, ' · ')), type = melhor and 'success' or 'error', duration = 20000 })
     testando = false
 end)

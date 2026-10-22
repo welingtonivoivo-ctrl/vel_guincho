@@ -29,6 +29,6 @@
   "sem_osso": "Could not find the part that moves the bed on this model. Check the mechanism in the setup.",
   "diag_fora": "Get out of the truck: the diagnosis runs from outside.",
   "diag_sem": "Stand near (15 m) a set up truck with a tilting bed.",
-  "diag_teste": "Diagnosis: test %s of 3...",
-  "diag_resultado": "Bed moved: test 1 = %.2f m · test 2 (engine on) = %.2f m · test 3 (invisible driver) = %.2f m"
+  "diag_teste": "Diagnosis: test %s of 6...",
+  "diag_resultado": "Bed moved: %s"
 }
