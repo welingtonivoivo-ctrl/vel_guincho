@@ -15,7 +15,7 @@ Config.AcePainel = 'vel_guincho.admin'
 Config.Semente = {
     { modelo = 'volvocbmesp', nome = 'Guincho Bombeiros (AG)', tipo = 'plataforma', plataforma = 'garfo',
       empregos = { 'bombeiros', 'guincho_sp' } },
-    { modelo = 'delivery11cmm', nome = 'Guincho Polícia (CMM)', tipo = 'plataforma', plataforma = 'braco',
+    { modelo = 'delivery11cmm', nome = 'Guincho Polícia (CMM)', tipo = 'plataforma', plataforma = 'escavadeira',
       empregos = { 'pmesp', 'pcesp', 'gcm', 'prf', 'police', 'guincho_sp' } },
     { modelo = 'deliverymec', nome = 'Guincho Mecânica', tipo = 'plataforma', plataforma = 'fixa',
       empregos = { 'mecanica_centro', 'guincho_sp' } },

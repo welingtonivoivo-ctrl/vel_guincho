@@ -18,7 +18,7 @@ local function animar(veiculo, mecanismo, de, ate)
     end
 end
 
-RegisterNetEvent('vel_guincho:client:testarPlataforma', function(mecanismo)
+RegisterNetEvent('vel_guincho:client:testarPlataforma', function(mecanismo, maximo)
     if testando then return end
     local veiculo = cache.vehicle
     if not veiculo then return lib.notify({ description = locale('entre_caminhao'), type = 'error' }) end
@@ -27,11 +27,16 @@ RegisterNetEvent('vel_guincho:client:testarPlataforma', function(mecanismo)
     if mecanismo == 'fixa' then
         return lib.notify({ description = locale('plataforma_fixa', c and c.nome or GetDisplayNameFromVehicleModel(GetEntityModel(veiculo))), type = 'inform' })
     end
+    maximo = tonumber(maximo) or (c and c.inclinacaoMax) or 1.0
+    maximo = math.max(0.05, math.min(1.0, maximo))
     testando = true
-    lib.notify({ description = locale('testando', mecanismo), type = 'inform' })
-    animar(veiculo, mecanismo, 0.0, 1.0)
-    Wait(800)
-    animar(veiculo, mecanismo, 1.0, 0.0)
+    lib.notify({ description = locale('testando', mecanismo, math.floor(maximo * 100)), type = 'inform' })
+    -- caminhão parado (freio + sapatas): a plataforma empurrando o chão não arrasta nem lança o caminhão
+    FreezeEntityPosition(veiculo, true)
+    animar(veiculo, mecanismo, 0.0, maximo)
+    Wait(1500)
+    animar(veiculo, mecanismo, maximo, 0.0)
+    FreezeEntityPosition(veiculo, false)
     testando = false
     lib.notify({ description = locale('teste_fim', mecanismo), type = 'success' })
 end)
