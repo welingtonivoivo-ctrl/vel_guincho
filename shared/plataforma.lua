@@ -6,7 +6,9 @@
 
 Plataforma = {}
 
-Plataforma.mecanismos = { 'fixa', 'garfo', 'braco', 'escavadeira' }
+-- 'cabine' = a plataforma só obedece às teclas do motorista (o jogo não deixa script mover);
+-- o sistema só lê a inclinação pela peça da plataforma
+Plataforma.mecanismos = { 'fixa', 'garfo', 'braco', 'escavadeira', 'cabine' }
 
 ---Mecanismos em que a plataforma empurra o chão ao descer: o caminhão fica travado enquanto ela se move.
 function Plataforma.travar(mecanismo)

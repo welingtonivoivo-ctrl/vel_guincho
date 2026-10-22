@@ -18,6 +18,15 @@ Legenda: **[I]** opção do Interact (mri_Qinteract) · **[T]** tecla mostrada n
 8. **Soltar do carro:** **[I] "Soltar cabo"** no carro. O gancho volta para a mão.
 9. **Recolher cabo:** caixa de comando → **[T] Recolher cabo**. O gancho volta para o motor.
 
+### A.1 Plataforma "pela cabine" (decisão do dono, 22/10/2026)
+
+Em modelos cuja plataforma só obedece às teclas do motorista (ex.: `volvocbmesp`, Shift sobe e Alt desce), o script não consegue mover a plataforma: testado com garfo, braço e escavadeira, com e sem motorista, e todos deram 0,00 m. Nesses modelos:
+
+- o **motorista inclina e recolhe a plataforma pela cabine**, com as teclas do próprio caminhão;
+- a **caixa de comando** cuida só do cabo: puxar, soltar e recolher;
+- o sistema **lê a inclinação** pela peça da plataforma e só deixa puxar ou soltar o carro com ela descida;
+- com carro preso e a plataforma recolhida, o carro fica preso à plataforma e acompanha qualquer movimento.
+
 ## B. Gancho (arrastar)
 
 1. O operador dá ré até a traseira do caminhão ficar a menos de 2 m da frente ou da traseira de um carro vazio.

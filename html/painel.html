@@ -74,7 +74,7 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
     function resposta(r) { if (!r || r.erro) { toast(r && r.erro || 'Erro.', 'erro'); return false; } if (r.msg) toast(r.msg, 'ok'); return true; }
 
     const TIPOS = { plataforma: 'Plataforma', gancho: 'Gancho (arrasta)' };
-    const MEC = { fixa: 'Fixa (rampa virtual)', garfo: 'Inclina — garfo', braco: 'Inclina — braço de reboque', escavadeira: 'Inclina — escavadeira' };
+    const MEC = { fixa: 'Fixa (rampa virtual)', garfo: 'Inclina — garfo', braco: 'Inclina — braço de reboque', escavadeira: 'Inclina — escavadeira', cabine: 'Inclina — pela cabine (teclas do motorista)' };
     const CABOS = { curto: 'Curto (10 m)', medio: 'Médio (15 m)', longo: 'Longo (25 m)' };
     const PONTOS = [
         ['motor', 'Motor do guincho', 'Onde o cabo sai (frente da plataforma). Mire na peça do motor.', (c) => c.tipo === 'plataforma'],

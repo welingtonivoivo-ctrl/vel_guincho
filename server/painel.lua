@@ -2,7 +2,7 @@
 
 local PONTOS = { motor = true, caixa = true, carga = true, rampa = true, engate = true }
 local TIPOS = { plataforma = true, gancho = true }
-local MECANISMOS = { fixa = true, garfo = true, braco = true, escavadeira = true }
+local MECANISMOS = { fixa = true, garfo = true, braco = true, escavadeira = true, cabine = true }
 
 local function quem(source)
     local p = exports.qbx_core:GetPlayer(source)
