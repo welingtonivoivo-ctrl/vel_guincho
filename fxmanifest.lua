@@ -19,6 +19,7 @@ client_scripts {
     'client/placement.lua',
     'client/teste.lua',
     'client/painel.lua',
+    'client/cabo.lua',
 }
 
 server_scripts {
@@ -26,6 +27,7 @@ server_scripts {
     'server/banco.lua',
     'server/main.lua',
     'server/painel.lua',
+    'server/cabo.lua',
 }
 
 ui_page 'html/index.html'
@@ -40,4 +42,5 @@ dependencies {
     'ox_lib',
     'oxmysql',
     'qbx_core',
+    'mri_Qinteract',
 }

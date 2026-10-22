@@ -30,5 +30,19 @@
   "diag_fora": "Get out of the truck: the diagnosis runs from outside.",
   "diag_sem": "Stand near (15 m) a set up truck with a tilting bed.",
   "diag_teste": "Diagnosis: test %s of 6...",
-  "diag_resultado": "Bed moved: %s"
+  "diag_resultado": "Bed moved: %s",
+  "pegar_cabo": "Take winch cable",
+  "devolver_cabo": "Return cable to winch",
+  "engatar_cabo": "Hook cable",
+  "soltar_cabo": "Unhook cable",
+  "sem_emprego": "Your job does not operate this tow truck.",
+  "fora_servico": "Go on duty to operate the tow truck.",
+  "longe": "Get closer.",
+  "cabo_ocupado": "This winch cable is already in use.",
+  "cabo_curto": "The cable does not reach that car: bring the truck closer.",
+  "so_vazio": "Only empty vehicles can be towed.",
+  "ja_engatado": "That car is already hooked to another tow truck.",
+  "carro_preso": "Release the car from the bed first.",
+  "nao_e_guincho": "That vehicle is not a registered tow truck.",
+  "cabo_limite": "The cable reached its limit and went back to the winch."
 }

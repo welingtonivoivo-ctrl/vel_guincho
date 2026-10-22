@@ -41,3 +41,12 @@ lib.addCommand('guinchodiag', { help = 'Diagnóstico da plataforma (fique fora d
     if not Guincho.admin(source) then return end
     TriggerClientEvent('vel_guincho:client:diag', source)
 end)
+
+-- Registro de ações (vel_guincho_log)
+function Guincho.log(source, acao, carro, c, patioId)
+    local p = exports.qbx_core:GetPlayer(source)
+    local pd = p and p.PlayerData
+    MySQL.insert('INSERT INTO `vel_guincho_log` (citizenid, emprego, acao, placa, modelo_caminhao, patio_id) VALUES (?, ?, ?, ?, ?, ?)', {
+        pd and pd.citizenid, pd and pd.job and pd.job.name, acao, carro and GetVehicleNumberPlateText(carro) or nil, c and c.modelo, patioId,
+    })
+end

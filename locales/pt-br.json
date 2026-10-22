@@ -30,5 +30,19 @@
   "diag_fora": "Saia do caminhão: o diagnóstico é feito de fora.",
   "diag_sem": "Fique perto (15 m) de um caminhão cadastrado com plataforma que inclina.",
   "diag_teste": "Diagnóstico: teste %s de 6...",
-  "diag_resultado": "Plataforma andou: %s"
+  "diag_resultado": "Plataforma andou: %s",
+  "pegar_cabo": "Pegar cabo do guincho",
+  "devolver_cabo": "Devolver cabo ao guincho",
+  "engatar_cabo": "Engatar cabo",
+  "soltar_cabo": "Soltar cabo",
+  "sem_emprego": "Seu emprego não opera este guincho.",
+  "fora_servico": "Entre em serviço para operar o guincho.",
+  "longe": "Chegue mais perto.",
+  "cabo_ocupado": "O cabo deste guincho já está em uso.",
+  "cabo_curto": "O cabo não alcança esse carro: aproxime o caminhão.",
+  "so_vazio": "Só dá para guinchar carro vazio.",
+  "ja_engatado": "Esse carro já está engatado em outro guincho.",
+  "carro_preso": "Solte o carro da plataforma antes.",
+  "nao_e_guincho": "Esse veículo não é um guincho cadastrado.",
+  "cabo_limite": "O cabo chegou no limite e voltou para o guincho."
 }
