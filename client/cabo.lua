@@ -93,11 +93,8 @@ local function caminhaoDoCarro(carro)
     end
 end
 
-local function engatar(carro)
+local function engatar(carro, ponto)
     if not meuCabo or not DoesEntityExist(meuCabo) then return end
-    -- frente ou traseira: a ponta do carro mais perto de quem engata
-    local p = GetEntityCoords(cache.ped)
-    local ponto = #(p - pontoDoCarro(carro, 'frente')) <= #(p - pontoDoCarro(carro, 'tras')) and 'frente' or 'tras'
     if pcall(lib.requestAnimDict, ANIM.dict, 3000) then
         TaskTurnPedToFaceEntity(cache.ped, carro, 600)
         Wait(600)
@@ -123,19 +120,30 @@ local function soltar(carro)
     PlaySoundFrontend(-1, 'Hook_Detach', 'DLC_IE_Steal_Cargobob_Sounds', true)
 end
 
+-- Ponto do cabo neste carro ('frente'/'tras'), se estiver engatado
+local function pontoEngatado(carro)
+    local caminhao = caminhaoDoCarro(carro)
+    return caminhao and Entity(caminhao).state.velCabo.ponto
+end
+
+-- No meio do para-choque da frente e no de trás (offset em proporção da caixa do modelo)
+local PONTAS = { frente = vec3(0.5, 1.0, 0.35), tras = vec3(0.5, 0.0, 0.35) }
+local OPCOES_CARRO = {}
+
 CreateThread(function()
-    exports.mri_Qinteract:addGlobalVehicle({
-        {
-            name = 'vel_guincho_engatar', icon = 'fa-solid fa-link', label = locale('engatar_cabo'), distance = 2.5,
+    for ponto, offset in pairs(PONTAS) do
+        OPCOES_CARRO[#OPCOES_CARRO + 1] = {
+            name = 'vel_guincho_engatar_' .. ponto, icon = 'fa-solid fa-link', label = locale('engatar_' .. ponto), distance = 2.0, offset = offset,
             canInteract = function(ent) return meuCabo ~= nil and ent ~= meuCabo and not caminhaoDoCarro(ent) end,
-            onSelect = function(data) CreateThread(function() engatar(data.entity) end) end,
-        },
-        {
-            name = 'vel_guincho_soltar', icon = 'fa-solid fa-link-slash', label = locale('soltar_cabo'), distance = 2.5,
-            canInteract = function(ent) return meuCabo == nil and caminhaoDoCarro(ent) ~= nil end,
+            onSelect = function(data) CreateThread(function() engatar(data.entity, ponto) end) end,
+        }
+        OPCOES_CARRO[#OPCOES_CARRO + 1] = {
+            name = 'vel_guincho_soltar_' .. ponto, icon = 'fa-solid fa-link-slash', label = locale('soltar_cabo'), distance = 2.0, offset = offset,
+            canInteract = function(ent) return meuCabo == nil and pontoEngatado(ent) == ponto end,
             onSelect = function(data) CreateThread(function() soltar(data.entity) end) end,
-        },
-    })
+        }
+    end
+    exports.mri_Qinteract:addGlobalVehicle(OPCOES_CARRO)
 end)
 
 -- Caminhões por perto: põe e tira as opções do motor -------------------------
@@ -290,5 +298,7 @@ AddEventHandler('onResourceStop', function(res)
     if res ~= GetCurrentResourceName() then return end
     for veiculo in pairs(cabos) do apagarCabo(veiculo) end
     for veiculo in pairs(caminhoes) do esquecer(veiculo) end
-    pcall(function() exports.mri_Qinteract:removeGlobalVehicle({ 'vel_guincho_engatar', 'vel_guincho_soltar' }) end)
+    local nomes = {}
+    for _, o in ipairs(OPCOES_CARRO) do nomes[#nomes + 1] = o.name end
+    pcall(function() exports.mri_Qinteract:removeGlobalVehicle(nomes) end)
 end)

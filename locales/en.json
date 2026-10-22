@@ -44,5 +44,7 @@
   "ja_engatado": "That car is already hooked to another tow truck.",
   "carro_preso": "Release the car from the bed first.",
   "nao_e_guincho": "That vehicle is not a registered tow truck.",
-  "cabo_limite": "The cable reached its limit and went back to the winch."
+  "cabo_limite": "The cable reached its limit and went back to the winch.",
+  "engatar_frente": "Hook cable (front)",
+  "engatar_tras": "Hook cable (rear)"
 }

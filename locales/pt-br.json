@@ -44,5 +44,7 @@
   "ja_engatado": "Esse carro já está engatado em outro guincho.",
   "carro_preso": "Solte o carro da plataforma antes.",
   "nao_e_guincho": "Esse veículo não é um guincho cadastrado.",
-  "cabo_limite": "O cabo chegou no limite e voltou para o guincho."
+  "cabo_limite": "O cabo chegou no limite e voltou para o guincho.",
+  "engatar_frente": "Engatar cabo (frente)",
+  "engatar_tras": "Engatar cabo (traseira)"
 }
