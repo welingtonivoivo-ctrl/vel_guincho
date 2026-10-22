@@ -43,7 +43,10 @@ end
 ---Ponto de engate do carro (frente ou traseira, perto do chão, no centro).
 ---Carro de lado ou de rodas para cima.
 function GuinchoTombado(carro)
-    return IsEntityUpsidedown(carro) or math.abs(GetEntityRoll(carro)) > 60.0 or math.abs(GetEntityPitch(carro)) > 60.0
+    -- IsEntityUpsidedown devolve 1/0, e 0 é verdadeiro em Lua: compara explicitamente
+    local cabecaParaBaixo = IsEntityUpsidedown(carro)
+    if cabecaParaBaixo == true or cabecaParaBaixo == 1 then return true end
+    return math.abs(GetEntityRoll(carro)) > 60.0 or math.abs(GetEntityPitch(carro)) > 60.0
 end
 
 local function pontoDoCarro(carro, ponto)
@@ -330,10 +333,11 @@ RegisterNetEvent('vel_guincho:client:info', function()
     linhas[#linhas + 1] = ('cabo na mão: %s'):format(tostring(meuCabo))
     if v then
         local r = GetEntityRotation(v, 2)
-        linhas[#linhas + 1] = ('veículo %s | de cabeça para baixo: %s | roll %.0f | pitch %.0f | rot %.0f %.0f %.0f'):format(
+        linhas[#linhas + 1] = ('veículo %s | IsEntityUpsidedown: %s | roll %.0f | pitch %.0f | rot %.0f %.0f %.0f'):format(
             GetDisplayNameFromVehicleModel(GetEntityModel(v)), tostring(IsEntityUpsidedown(v)), GetEntityRoll(v), GetEntityPitch(v), r.x, r.y, r.z)
+        local engatado = caminhaoDoCarro(v)
         linhas[#linhas + 1] = ('tombado: %s | engatado em caminhão: %s | é o caminhão do cabo: %s'):format(
-            tostring(GuinchoTombado(v)), tostring(caminhaoDoCarro(v)), tostring(v == meuCabo))
+            tostring(GuinchoTombado(v)), tostring(engatado or false), tostring(v == meuCabo))
     else
         linhas[#linhas + 1] = 'nenhum veículo a 6 m'
     end
