@@ -295,7 +295,17 @@ local function desvirarPeloCabo(caminhao, c, carro)
     local dist = #(motor - GetEntityCoords(carro))
     local b = base[carro]
     if not b then
+        -- só quem é do emprego desvira andando (o servidor também confere no fim)
+        local pode, motivo = lib.callback.await('vel_guincho:desvirar:pode', false, NetworkGetNetworkIdFromEntity(caminhao))
+        if not pode then
+            base[carro] = { negado = GetGameTimer() + 10000 } -- pergunta de novo em 10 s
+            return notificar(motivo or 'sem_emprego')
+        end
         base[carro] = { dist = dist, rot = partida(caminhao, carro, GetEntityRotation(carro, 2)) }
+        return
+    end
+    if b.negado then
+        if GetGameTimer() > b.negado then base[carro] = nil end
         return
     end
     local progresso = math.min(1.0, math.max(0.0, (dist - b.dist) / PUXAO))
@@ -309,6 +319,8 @@ function desvirarPelaCaixa(caminhao)
     local s = Entity(caminhao).state.velCabo
     local carro = s and s.desvirar and NetworkGetEntityFromNetworkId(s.carro)
     if not carro or carro == 0 or not DoesEntityExist(carro) then return end
+    local pode, motivo = lib.callback.await('vel_guincho:desvirar:pode', false, NetworkGetNetworkIdFromEntity(caminhao))
+    if not pode then return notificar(motivo or 'sem_emprego') end
     operando = true
     alavanca(true)
     local rot0 = partida(caminhao, carro, GetEntityRotation(carro, 2))

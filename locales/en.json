@@ -41,6 +41,8 @@
   "cabo_ocupado": "This winch cable is already in use.",
   "cabo_curto": "The cable does not reach that car: bring the truck closer.",
   "so_vazio": "Only empty vehicles can be towed.",
+  "sem_aeronave": "This truck does not carry helicopters or planes.",
+  "grande_demais": "This vehicle is too big for this truck.",
   "ja_engatado": "That car is already hooked to another tow truck.",
   "carro_preso": "Release the car from the bed first.",
   "nao_e_guincho": "That vehicle is not a registered tow truck.",

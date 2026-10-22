@@ -119,8 +119,23 @@ local function caminhaoDoCarro(carro)
     end
 end
 
+---Limite de tamanho do caminhão (painel): comprimento do modelo e aeronaves. Só para levar (frente/traseira).
+local function cabeNoCaminhao(caminhao, carro)
+    local info = caminhoes[caminhao]
+    local limite = info and info.c.pontos.limite
+    if not limite then return true end
+    if limite.aeronave == false and AERONAVE[GetVehicleClass(carro)] then return false, 'sem_aeronave' end
+    local min, max = GetModelDimensions(GetEntityModel(carro))
+    if (limite.comprimento or 0) > 0 and max.y - min.y > limite.comprimento then return false, 'grande_demais' end
+    return true
+end
+
 local function engatar(carro, ponto)
     if not meuCabo or not DoesEntityExist(meuCabo) then return end
+    if ponto ~= 'lado' then
+        local cabe, motivo = cabeNoCaminhao(meuCabo, carro)
+        if not cabe then return notificar(motivo) end
+    end
     if pcall(lib.requestAnimDict, ANIM.dict, 3000) then
         TaskTurnPedToFaceEntity(cache.ped, carro, 600)
         Wait(600)

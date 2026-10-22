@@ -89,6 +89,9 @@ lib.callback.register('vel_guincho:cabo:engatar', function(source, netCaminhao, 
     if distancia(source, carro) > 8.0 then return false, 'longe' end
     if #(GetEntityCoords(carro) - GetEntityCoords(caminhao)) > (Config.Cabo[c.cabo] or 15.0) + 8.0 then return false, 'cabo_curto' end
     if not vazio(carro) then return false, 'so_vazio' end
+    local limite = c.pontos and c.pontos.limite
+    local tipo = GetVehicleType(carro)
+    if ponto ~= 'lado' and limite and limite.aeronave == false and (tipo == 'heli' or tipo == 'plane') then return false, 'sem_aeronave' end
     -- carro tombado só engata "para desvirar"; carro em pé só pela frente ou traseira
     if (ponto == 'lado') ~= tombado(carro) then return false, ponto == 'lado' and 'nao_tombado' or 'tombado' end
     for netId in pairs(comCabo) do
@@ -166,13 +169,23 @@ lib.callback.register('vel_guincho:carga:concluir', function(source, netCaminhao
     return true
 end)
 
+-- O motorista pergunta antes de desvirar andando (o giro acontece no cliente dele)
+lib.callback.register('vel_guincho:desvirar:pode', function(source, netCaminhao)
+    local caminhao = entidade(netCaminhao)
+    local c = caminhao and cadastroDe(caminhao)
+    if not c then return false end
+    return Guincho.podeOperar(source, c)
+end)
+
 -- Desvirar: o motorista do caminhão puxou o carro até ficar de pé; o cabo volta para o guincho
 lib.callback.register('vel_guincho:desvirar:concluir', function(source, netCaminhao)
     local caminhao = entidade(netCaminhao)
     local s = caminhao and Entity(caminhao).state.velCabo
     if not s or not s.desvirar then return false end
+    -- sempre do emprego; o motorista pode estar longe da caixa, quem opera a pé tem que estar perto
+    if not Guincho.podeOperar(source, cadastroDe(caminhao)) then return false end
     local motorista = GetPedInVehicleSeat(caminhao, -1) == GetPlayerPed(source)
-    if not motorista and (not Guincho.podeOperar(source, cadastroDe(caminhao)) or distancia(source, caminhao) > 10.0) then return false end
+    if not motorista and distancia(source, caminhao) > 10.0 then return false end
     local carro = entidade(s.carro)
     if not carro or tombado(carro) then return false end
     Guincho.log(source, 'desvirou', carro, cadastroDe(caminhao))

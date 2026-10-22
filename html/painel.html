@@ -119,6 +119,12 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
             <div class="linha"><input type="range" id="e-inc" min="5" max="100" step="1" value="${inc}" style="flex:1"><b id="e-incv" style="width:48px;text-align:right">${inc}%</b>
             <button class="btn peq" id="e-incz">Recolher</button></div>
         </div>
+        <div class="card"><h3>Tamanho máximo da carga</h3>
+            <p class="ajuda">Veículos maiores que isso não engatam neste caminhão. O comprimento é medido do bico à traseira do modelo (num helicóptero, do rotor à cauda). <b>0 = sem limite</b>.</p>
+            <div class="grade">
+                <div><label>Comprimento máximo (m)</label><input type="number" id="e-comp" min="0" max="40" step="0.5" value="${(c.pontos.limite && c.pontos.limite.comprimento) || 0}"></div>
+                <div><label>&nbsp;</label><label style="display:flex;gap:8px;align-items:center;color:var(--texto)"><input type="checkbox" id="e-aero" ${!c.pontos.limite || c.pontos.limite.aeronave !== false ? 'checked' : ''}> Leva helicóptero e avião</label></div>
+            </div></div>
         <div class="card"><h3>Quem pode usar</h3><div class="empregos">${dados.empregos.map((j) =>
             `<label><input type="checkbox" data-emp="${esc(j.nome)}" ${c.empregos.includes(j.nome) ? 'checked' : ''}> ${esc(j.rotulo)}</label>`).join('')}</div></div>
         <div class="linha" style="margin-bottom:16px"><button class="btn ouro" id="e-salvar">Salvar cadastro</button><div style="flex:1"></div><button class="btn perigo" id="e-rem">Remover caminhão</button></div>
@@ -138,7 +144,8 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
         $('#e-salvar').onclick = () => {
             const empregos = [...document.querySelectorAll('[data-emp]')].filter((i) => i.checked).map((i) => i.dataset.emp);
             chamar('salvar', c.id, { nome: $('#e-nome').value, tipo: $('#e-tipo').value, plataforma: $('#e-mec').value, cabo: $('#e-cabo').value,
-                exigeServico: $('#e-serv').checked, empregos, inclinacao: $('#e-inc').value / 100 }).then((r) => { if (resposta(r)) carregar(); });
+                exigeServico: $('#e-serv').checked, empregos, inclinacao: $('#e-inc').value / 100,
+                limite: { comprimento: Number($('#e-comp').value) || 0, aeronave: $('#e-aero').checked } }).then((r) => { if (resposta(r)) carregar(); });
         };
         let armado = 0;
         $('#e-rem').onclick = (e) => {

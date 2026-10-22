@@ -69,6 +69,9 @@ function F.salvar(source, id, c)
     end
     local pontos = decodificar(MySQL.scalar.await('SELECT pontos FROM `vel_guincho_caminhoes` WHERE id = ?', { id }))
     pontos.inclinacao = numero(c.inclinacao, 0.05, 1.0) or pontos.inclinacao or 1.0
+    if type(c.limite) == 'table' then
+        pontos.limite = { comprimento = numero(c.limite.comprimento, 0, 40) or 0, aeronave = c.limite.aeronave ~= false }
+    end
     MySQL.update.await('UPDATE `vel_guincho_caminhoes` SET nome = ?, tipo = ?, plataforma = ?, empregos = ?, exige_servico = ?, cabo = ?, pontos = ?, atualizado_por = ? WHERE id = ?', {
         nome, c.tipo, c.tipo == 'plataforma' and (c.plataforma or 'fixa') or nil, json.encode(empregos), c.exigeServico == false and 0 or 1,
         c.cabo, json.encode(pontos), quem(source), id,

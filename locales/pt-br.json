@@ -41,6 +41,8 @@
   "cabo_ocupado": "O cabo deste guincho já está em uso.",
   "cabo_curto": "O cabo não alcança esse carro: aproxime o caminhão.",
   "so_vazio": "Só dá para guinchar carro vazio.",
+  "sem_aeronave": "Este caminhão não leva helicóptero nem avião.",
+  "grande_demais": "Este veículo é grande demais para este caminhão.",
   "ja_engatado": "Esse carro já está engatado em outro guincho.",
   "carro_preso": "Solte o carro da plataforma antes.",
   "nao_e_guincho": "Esse veículo não é um guincho cadastrado.",
