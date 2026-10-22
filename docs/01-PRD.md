@@ -57,3 +57,5 @@ Os 6 modelos guincham, rebocam e desviram em jogo, sincronizados entre dois joga
 13. **Guincho portátil (item `guincho_portatil`):** motor de guincho (modelo `prop_bison_winch`) que qualquer jogador com o item fixa numa árvore, poste ou objeto. Estica o cabo até um carro capotado e desvira, igual aos caminhões. Só desvira (não arrasta). Desgasta: 10 desviradas e quebra. Vendido pelas mecânicas.
 14. **Caminhões de cambão** (arrastam o carro: `towtruck`, `towtruck2`) **não têm** o sistema de desvirar. O mecânico que usa cambão precisa do guincho portátil.
 15. O desvirar rola o carro **na direção do cabo**.
+16. **Aeronaves e tamanho máximo (22/10):** helicóptero e avião engatam pela fuselagem. Cada caminhão tem no painel um comprimento máximo (0 = sem limite) e se leva aeronave. A carga apoia a base de cada modelo no assoalho.
+17. **Desvirar só para quem é do emprego**, também dirigindo o caminhão.
