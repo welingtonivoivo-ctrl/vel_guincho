@@ -26,5 +26,9 @@
   "ponto_rampa": "Início da rampa",
   "ponto_engate": "Engate do gancho",
   "ponto_vazio": "A mira não acertou nada: aponte para o caminhão ou para o chão e tente de novo.",
-  "sem_osso": "Não achei a peça que move a plataforma neste modelo. Confira o mecanismo no cadastro."
+  "sem_osso": "Não achei a peça que move a plataforma neste modelo. Confira o mecanismo no cadastro.",
+  "diag_fora": "Saia do caminhão: o diagnóstico é feito de fora.",
+  "diag_sem": "Fique perto (15 m) de um caminhão cadastrado com plataforma que inclina.",
+  "diag_teste": "Diagnóstico: teste %s de 3...",
+  "diag_resultado": "Plataforma andou: teste 1 = %.2f m · teste 2 (motor ligado) = %.2f m · teste 3 (motorista invisível) = %.2f m"
 }

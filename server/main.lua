@@ -35,3 +35,9 @@ lib.addCommand('guinchoteste', {
     end
     TriggerClientEvent('vel_guincho:client:testarPlataforma', source, m, args.maximo and args.maximo / 100)
 end)
+
+-- /guinchodiag: diagnóstico da plataforma com o admin fora do caminhão
+lib.addCommand('guinchodiag', { help = 'Diagnóstico da plataforma (fique fora do caminhão)' }, function(source)
+    if not Guincho.admin(source) then return end
+    TriggerClientEvent('vel_guincho:client:diag', source)
+end)
