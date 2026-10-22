@@ -46,5 +46,11 @@
   "nao_e_guincho": "That vehicle is not a registered tow truck.",
   "cabo_limite": "The cable reached its limit and went back to the winch.",
   "engatar_frente": "Hook cable (front)",
-  "engatar_tras": "Hook cable (rear)"
+  "engatar_tras": "Hook cable (rear)",
+  "puxar_carro": "Pull car onto the bed",
+  "descer_carro": "Lower car from the bed",
+  "sem_pontos": "This truck has no load position and ramp marked in the panel yet.",
+  "incline_primeiro": "Tilt the bed from the cab before pulling or lowering the car.",
+  "falhou_carga": "Could not move the car. Try again.",
+  "caminhao_freado": "Cable hooked: release it or load the car before driving off."
 }

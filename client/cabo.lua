@@ -81,6 +81,7 @@ local function opcoesCaminhao(veiculo, c)
                 lib.callback.await('vel_guincho:cabo:devolver', false, NetworkGetNetworkIdFromEntity(data.entity or veiculo))
             end,
         },
+        table.unpack(GuinchoCarga.opcoes(veiculo, c)),
     }
 end
 

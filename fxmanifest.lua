@@ -19,6 +19,7 @@ client_scripts {
     'client/placement.lua',
     'client/teste.lua',
     'client/painel.lua',
+    'client/carga.lua',
     'client/cabo.lua',
 }
 

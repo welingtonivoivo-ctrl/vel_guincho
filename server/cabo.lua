@@ -103,7 +103,7 @@ lib.callback.register('vel_guincho:cabo:soltar', function(source, netCaminhao)
     if not ok then return false, motivo end
     local carro = entidade(s.carro)
     if carro and distancia(source, carro) > 5.0 then return false, 'longe' end
-    if s.carga then return false, 'carro_preso' end
+    if s.carga or s.fase then return false, 'carro_preso' end
     definir(caminhao, { mao = source })
     return true
 end)
@@ -122,4 +122,37 @@ end)
 
 AddEventHandler('entityRemoved', function(e)
     if GetEntityType(e) == 2 then comCabo[NetworkGetNetworkIdFromEntity(e)] = nil end
+end)
+
+-- Etapa 4/5: puxar o carro para a plataforma e descer. Quem pede anima o carro no próprio cliente
+-- (com o controle de rede do carro) e avisa quando terminou; o servidor só guarda a fase.
+-- velCabo ganha: fase = 'subindo'|'descendo' (durante o movimento), carga = true (carro preso)
+lib.callback.register('vel_guincho:carga:comando', function(source, netCaminhao, acao)
+    if cedo(source) then return false end
+    local caminhao = entidade(netCaminhao)
+    local s = caminhao and Entity(caminhao).state.velCabo
+    if not s or not s.carro or s.fase then return false end
+    local c = cadastroDe(caminhao)
+    local ok, motivo = Guincho.podeOperar(source, c)
+    if not ok then return false, motivo end
+    if distancia(source, caminhao) > 10.0 then return false, 'longe' end
+    if acao == 'puxar' and s.carga then return false end
+    if acao == 'descer' and not s.carga then return false end
+    if acao ~= 'puxar' and acao ~= 'descer' then return false end
+    s.fase, s.por = acao == 'puxar' and 'subindo' or 'descendo', source
+    definir(caminhao, s)
+    return true
+end)
+
+lib.callback.register('vel_guincho:carga:concluir', function(source, netCaminhao, sucesso)
+    local caminhao = entidade(netCaminhao)
+    local s = caminhao and Entity(caminhao).state.velCabo
+    if not s or not s.fase or s.por ~= source then return false end
+    if sucesso then
+        s.carga = s.fase == 'subindo' or nil
+        Guincho.log(source, s.carga and 'carregou' or 'descarregou', entidade(s.carro), cadastroDe(caminhao))
+    end
+    s.fase = nil
+    definir(caminhao, s)
+    return true
 end)
