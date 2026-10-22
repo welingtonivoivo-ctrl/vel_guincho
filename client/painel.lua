@@ -101,7 +101,11 @@ RegisterNUICallback('painelMarcar', function(d, cb)
         if inclinada then moverPlataforma(caminhao, c.plataforma, 0.0, maximo) end
         local r
         if regra.ferramenta == 'carro' then
-            r = GuinchoPlacer.point({ vehicle = CARRO_PREVIA, heading = GetEntityHeading(caminhao) })
+            -- já devolve relativo ao caminhão
+            local o = GuinchoPlacer.onTruck({ vehicle = CARRO_PREVIA, truck = caminhao, start = c.pontos.carga })
+            if inclinada then moverPlataforma(caminhao, c.plataforma, maximo, 0.0) end
+            if not o then return nil end
+            return lib.callback.await('vel_guincho:painel:ponto', false, c.id, d.ponto, o)
         elseif regra.ferramenta == 'aqui' then
             r = GuinchoPlacer.here()
         else

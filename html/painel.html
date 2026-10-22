@@ -79,7 +79,7 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
     const PONTOS = [
         ['motor', 'Motor do guincho', 'Onde o cabo sai (frente da plataforma). Mire na peça do motor.', (c) => c.tipo === 'plataforma'],
         ['caixa', 'Caixa de comando', 'Onde o operador fica em pé para puxar, soltar e inclinar. Fique no lugar, olhe para o caminhão e aperte E.', () => true],
-        ['carga', 'Posição de carga', 'Onde o carro fica preso em cima da plataforma. Aparece um carro-fantasma: mire na plataforma e gire com ← →.', (c) => c.tipo === 'plataforma'],
+        ['carga', 'Posição de carga', 'Onde o carro fica preso em cima da plataforma. Um carro-fantasma aparece no centro do caminhão: ↑ ↓ frente/trás, Shift + ↑ ↓ altura.', (c) => c.tipo === 'plataforma'],
         ['rampa', 'Início da rampa', 'Onde o carro começa a subir (chão atrás da plataforma). Se a plataforma inclina, ela desce sozinha para você marcar.', (c) => c.tipo === 'plataforma'],
         ['engate', 'Engate do gancho', 'Ponto de engate na traseira do caminhão.', (c) => c.tipo === 'gancho'],
     ];

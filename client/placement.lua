@@ -176,6 +176,57 @@ function GuinchoPlacer.here()
 	return result
 end
 
+---Carro-fantasma preso ao caminhão, já no centro: ↑ ↓ anda na plataforma, Shift + ↑ ↓ sobe e desce,
+---← → gira, E confirma. Devolve o deslocamento relativo ao caminhão (sempre centralizado em X).
+---@param opts { vehicle: string|number, truck: number, start?: { y: number, z: number, h: number } }
+---@return { x: number, y: number, z: number, h: number }|nil
+function GuinchoPlacer.onTruck(opts)
+	if active then return nil end
+	local truck = opts.truck
+	if not DoesEntityExist(truck) then return nil end
+	local ghost = ghostVehicle(opts.vehicle, GetEntityHeading(truck))
+	if not ghost then return nil end
+	local min, max = GetModelDimensions(GetEntityModel(truck))
+	local cmin = GetModelDimensions(GetEntityModel(ghost))
+	local s = opts.start or {}
+	-- começo: metade de trás do caminhão, rodas na altura do topo do chassi
+	local y = tonumber(s.y) or (min.y * 0.35)
+	local z = tonumber(s.z) or ((min.z + max.z) * 0.5 - cmin.z)
+	local h = tonumber(s.h) or 0.0
+	active = true
+	hud({ mode = 'carga' })
+	local result
+	local UP, DOWN = 172, 173
+	while active do
+		block()
+		DisableControlAction(0, UP, true); DisableControlAction(0, DOWN, true)
+		local frame = GetFrameTime()
+		local passo = (IsDisabledControlPressed(0, UP) and 1 or 0) - (IsDisabledControlPressed(0, DOWN) and 1 or 0)
+		if passo ~= 0 then
+			if IsControlPressed(0, SHIFT) then z = z + passo * 0.4 * frame else y = y + passo * 1.2 * frame end
+		end
+		if IsControlPressed(0, KEY.left) then h = h + ROTATE_SPEED * frame end
+		if IsControlPressed(0, KEY.right) then h = h - ROTATE_SPEED * frame end
+		h = h % 360
+		AttachEntityToEntity(ghost, truck, 0, 0.0, y, z, 0.0, 0.0, h, false, false, false, false, 2, true)
+		if IsControlJustPressed(0, KEY.mark) then
+			PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+			local r = function(v) return math.floor(v * 1000 + 0.5) / 1000 end
+			result = { x = 0.0, y = r(y), z = r(z), h = r(h) }
+			break
+		elseif IsDisabledControlJustPressed(0, KEY.cancel) or IsControlJustPressed(0, KEY.undo) then
+			PlaySoundFrontend(-1, 'BACK', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+			releaseEsc()
+			break
+		end
+		Wait(0)
+	end
+	active = false
+	hud(false)
+	DeleteEntity(ghost)
+	return result
+end
+
 function GuinchoPlacer.isActive()
 	return active
 end

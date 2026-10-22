@@ -28,6 +28,9 @@ kbd { display: inline-block; padding: 2px 8px; margin: 0 2px; border-radius: 6px
         if (d.mode === 'place') {
             t.innerHTML = `<div class="t">Posição de carga <span>Mire na plataforma; o carro-fantasma mostra como o carro vai ficar.</span></div>
                 <div class="k"><kbd>←</kbd><kbd>→</kbd> Girar</div><div class="k"><kbd>E</kbd> Confirmar</div><div class="k"><kbd>Esc</kbd> Cancelar</div>`;
+        } else if (d.mode === 'carga') {
+            t.innerHTML = `<div class="t">Posição de carga <span>O carro já está no centro do caminhão. Ajuste até as rodas encostarem na plataforma.</span></div>
+                <div class="k"><kbd>↑</kbd><kbd>↓</kbd> Frente / trás</div><div class="k"><kbd>Shift</kbd>+<kbd>↑</kbd><kbd>↓</kbd> Altura</div><div class="k"><kbd>←</kbd><kbd>→</kbd> Girar</div><div class="k"><kbd>E</kbd> Confirmar</div><div class="k"><kbd>Esc</kbd> Cancelar</div>`;
         } else if (d.mode === 'here') {
             t.innerHTML = `<div class="t">Onde o operador fica <span>Fique em pé no lugar e olhe para o caminhão (a seta mostra).</span></div>
                 <div class="k"><kbd>E</kbd> Marcar onde estou</div><div class="k"><kbd>Esc</kbd> Cancelar</div>`;
