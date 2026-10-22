@@ -176,27 +176,15 @@ function GuinchoPlacer.here()
 	return result
 end
 
--- Posição e giro de `ent` (preso ao caminhão) convertidos para relativos à peça onde `anchor` está presa.
--- O giro de uma peça pode ser qualquer um (ex.: 90° de lado), então ajusta prendendo e conferindo no mundo.
-local function wrap(a) return (a + 180.0) % 360.0 - 180.0 end
-local function relativeToAnchor(ent, anchor)
-	Wait(0)
-	local alvo = GetEntityCoords(ent)
-	local alvoRot = GetEntityRotation(ent, 2)
-	local o = GetOffsetFromEntityGivenWorldCoords(anchor, alvo.x, alvo.y, alvo.z)
-	local ar = GetEntityRotation(anchor, 2)
-	local rot = vec3(wrap(alvoRot.x - ar.x), wrap(alvoRot.y - ar.y), wrap(alvoRot.z - ar.z))
-	local parent, idx = GetEntityAttachedTo(anchor), Plataforma.ancoraOsso[anchor] or 0
-	for _ = 1, 6 do
-		AttachEntityToEntity(ent, parent, idx, o.x, o.y, o.z, rot.x, rot.y, rot.z, false, false, false, false, 2, true)
-		Wait(0)
-		local agora = GetEntityRotation(ent, 2)
-		local d = vec3(wrap(alvoRot.x - agora.x), wrap(alvoRot.y - agora.y), wrap(alvoRot.z - agora.z))
-		if math.abs(d.x) + math.abs(d.y) + math.abs(d.z) < 0.5 then break end
-		rot = rot + d
+-- Dois pontos na linha do carro (1 m à frente e 1 m atrás do centro), guardados relativos à peça da
+-- plataforma. Com eles o carro é recolocado deitado na plataforma em qualquer inclinação (sem conta de giro).
+local function pointsOnAnchor(truck, anchor, y, z)
+	local function rel(dy)
+		local w = GetOffsetFromEntityInWorldCoords(truck, 0.0, y + dy, z)
+		local o = GetOffsetFromEntityGivenWorldCoords(anchor, w.x, w.y, w.z)
+		return { x = math.floor(o.x * 1000 + 0.5) / 1000, y = math.floor(o.y * 1000 + 0.5) / 1000, z = math.floor(o.z * 1000 + 0.5) / 1000 }
 	end
-	local r = function(v) return math.floor(v * 1000 + 0.5) / 1000 end
-	return { x = r(o.x), y = r(o.y), z = r(o.z), rx = r(rot.x), ry = r(rot.y), rz = r(rot.z) }
+	return { f = rel(1.0), t = rel(-1.0) }
 end
 
 ---Carro-fantasma preso ao caminhão, já no centro: ↑ ↓ anda na plataforma, Shift + ↑ ↓ sobe e desce,
@@ -249,7 +237,7 @@ function GuinchoPlacer.onTruck(opts)
 	active = false
 	hud(false)
 	if result and opts.anchor and DoesEntityExist(opts.anchor) then
-		result.b = relativeToAnchor(ghost, opts.anchor)
+		result.b = pointsOnAnchor(truck, opts.anchor, result.y, result.z)
 	end
 	DeleteEntity(ghost)
 	return result

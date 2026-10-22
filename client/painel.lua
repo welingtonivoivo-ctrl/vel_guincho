@@ -175,16 +175,19 @@ RegisterNUICallback('painelVer', function(d, cb)
             SetModelAsNoLongerNeeded(joaat(CARRO_PREVIA))
             SetEntityAlpha(fantasma, 170, false)
             SetEntityCollision(fantasma, false, false)
-            local osso = carga.b and Plataforma.osso(caminhao, carga.osso)
-            if osso then
-                local b = carga.b
-                AttachEntityToEntity(fantasma, caminhao, osso, b.x, b.y, b.z, b.rx, b.ry, b.rz, false, false, false, false, 2, true)
-            else
-                AttachEntityToEntity(fantasma, caminhao, 0, carga.x, carga.y, carga.z, 0.0, 0.0, carga.h or 0.0, false, false, false, false, 2, true)
-            end
+
         end
         local fim = GetGameTimer() + 15000
         while GetGameTimer() < fim and DoesEntityExist(caminhao) do
+            if fantasma then
+                local ancora = nil
+                if carga.osso then
+                    ancoras[carga.osso] = ancoras[carga.osso] == nil and (Plataforma.osso(caminhao, carga.osso) and Plataforma.ancora(caminhao, Plataforma.osso(caminhao, carga.osso)) or false) or ancoras[carga.osso]
+                    ancora = ancoras[carga.osso] or nil
+                end
+                local centro, inclinacao, giro = Plataforma.carga(caminhao, carga, ancora)
+                AttachEntityToEntity(fantasma, caminhao, 0, centro.x, centro.y, centro.z, inclinacao, 0.0, giro, false, false, false, false, 2, true)
+            end
             for nome, p in pairs(c.pontos) do
                 if type(p) == 'table' and p.x and nome ~= 'carga' then
                     local w = noMundoDe(caminhao, p, ancoras)

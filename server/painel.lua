@@ -87,10 +87,10 @@ function F.ponto(source, id, nome, d)
     if d.h then p.h = numero(d.h, 0, 360) end
     if type(d.osso) == 'string' and d.osso:match('^[%w_]+$') and #d.osso <= 32 then p.osso = d.osso end
     -- posição relativa à peça da plataforma (a origem da peça pode ficar alguns metros longe)
-    if p.osso and type(d.b) == 'table' then
-        local b = { x = numero(d.b.x, -30, 30), y = numero(d.b.y, -30, 30), z = numero(d.b.z, -30, 30),
-            rx = numero(d.b.rx, -360, 360), ry = numero(d.b.ry, -360, 360), rz = numero(d.b.rz, -360, 360) }
-        if b.x and b.y and b.z and b.rx and b.ry and b.rz then p.b = b end
+    if p.osso and type(d.b) == 'table' and type(d.b.f) == 'table' and type(d.b.t) == 'table' then
+        local function v(q) return { x = numero(q.x, -30, 30), y = numero(q.y, -30, 30), z = numero(q.z, -30, 30) } end
+        local f, t = v(d.b.f), v(d.b.t)
+        if f.x and f.y and f.z and t.x and t.y and t.z then p.b = { f = f, t = t } end
     end
     local pontos = decodificar(MySQL.scalar.await('SELECT pontos FROM `vel_guincho_caminhoes` WHERE id = ?', { id }))
     pontos[nome] = p

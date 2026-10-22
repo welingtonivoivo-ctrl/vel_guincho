@@ -72,6 +72,22 @@ function Plataforma.detectarOsso(veiculo, mecanismo, maximo)
     return melhor
 end
 
+---Onde o carro de carga fica agora, relativo ao caminhão: centro e inclinação (graus) calculados pelos
+---dois pontos guardados na peça da plataforma. Sem os pontos, usa a posição com a plataforma reta.
+---@return vector3 centro, number inclinacao, number giro
+function Plataforma.carga(caminhao, carga, ancora)
+    if ancora and carga.b and carga.b.f then
+        local function noCaminhao(p)
+            local w = GetOffsetFromEntityInWorldCoords(ancora, p.x, p.y, p.z)
+            return GetOffsetFromEntityGivenWorldCoords(caminhao, w.x, w.y, w.z)
+        end
+        local f, t = noCaminhao(carga.b.f), noCaminhao(carga.b.t)
+        local centro = (f + t) / 2
+        return vec3(0.0, centro.y, centro.z), math.deg(math.atan(f.z - t.z, f.y - t.y)), carga.h or 0.0
+    end
+    return vec3(0.0, carga.y, carga.z), 0.0, carga.h or 0.0
+end
+
 -- Peça (índice do osso) em que cada âncora está presa
 Plataforma.ancoraOsso = {}
 
