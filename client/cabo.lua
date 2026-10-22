@@ -148,8 +148,7 @@ local function esquecer(veiculo)
     caminhoes[veiculo] = nil
 end
 
-CreateThread(function()
-    while true do
+local function varrer()
         local vivos = {}
         for _, v in ipairs(lib.getNearbyVehicles(GetEntityCoords(cache.ped), PERTO, true)) do
             local c = cadastroDe(v.vehicle)
@@ -165,6 +164,12 @@ CreateThread(function()
         for veiculo in pairs(caminhoes) do
             if not vivos[veiculo] or not DoesEntityExist(veiculo) then esquecer(veiculo) end
         end
+end
+
+CreateThread(function()
+    while true do
+        local ok, erro = pcall(varrer)
+        if not ok then print(('^1[vel_guincho] caminhões: %s^7'):format(erro)) end
         Wait(1000)
     end
 end)
@@ -213,15 +218,14 @@ local function montarCabo(veiculo, c, s)
         if not alvo or alvo == 0 or not DoesEntityExist(alvo) then return end
         ponto = pontoDoCarro(alvo, s.ponto)
     end
+    -- corda só visual: as pontas são presas a cada quadro (presa a entidades a corda puxa de verdade
+    -- e arremessa o caminhão); quem move o carro é o sistema, de forma controlada
     local comprimento = math.max(1.0, #(motor - ponto))
     local corda = AddRope(motor.x, motor.y, motor.z, 0.0, 0.0, 0.0, caboMax(c) + 2.0, 4, comprimento, 0.5, 1.0, false, false, false, 1.0, false)
-    AttachEntitiesToRope(corda, veiculo, alvo, motor.x, motor.y, motor.z, ponto.x, ponto.y, ponto.z, comprimento, false, false, nil, nil)
-    cabos[veiculo] = { assinatura = json.encode(s), corda = corda, gancho = gancho, alvo = alvo, ponto = s.ponto }
+    cabos[veiculo] = { assinatura = json.encode(s), corda = corda, gancho = gancho, alvo = alvo, ponto = s.ponto, c = c }
 end
 
-CreateThread(function()
-    local meuId = cache.serverId
-    while true do
+local function atualizarCabos(meuId)
         local tenho = nil
         for veiculo, info in pairs(caminhoes) do
             local s = DoesEntityExist(veiculo) and Entity(veiculo).state.velCabo
@@ -252,7 +256,33 @@ CreateThread(function()
                 lib.callback.await('vel_guincho:cabo:devolver', false, NetworkGetNetworkIdFromEntity(meuCabo))
             end
         end
+end
+
+CreateThread(function()
+    while true do
+        local ok, erro = pcall(atualizarCabos, cache.serverId)
+        if not ok then print(('^1[vel_guincho] cabos: %s^7'):format(erro)) end
         Wait(200)
+    end
+end)
+
+-- Pontas do cabo: motor e gancho/carro, todo quadro
+CreateThread(function()
+    while true do
+        local algum = false
+        for veiculo, cb in pairs(cabos) do
+            if cb.corda and DoesRopeExist(cb.corda) and DoesEntityExist(veiculo) then
+                algum = true
+                local motor = motorNoMundo(veiculo, cb.c)
+                local fim = cb.gancho and DoesEntityExist(cb.gancho) and GetEntityCoords(cb.gancho)
+                    or (cb.alvo and DoesEntityExist(cb.alvo) and pontoDoCarro(cb.alvo, cb.ponto))
+                if motor and fim then
+                    PinRopeVertex(cb.corda, 0, motor.x, motor.y, motor.z)
+                    PinRopeVertex(cb.corda, GetRopeVertexCount(cb.corda) - 1, fim.x, fim.y, fim.z)
+                end
+            end
+        end
+        Wait(algum and 0 or 250)
     end
 end)
 
