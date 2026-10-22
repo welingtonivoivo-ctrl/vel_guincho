@@ -145,6 +145,37 @@ local function clampSize(value)
 	return math.min(ZONE_MAX, math.max(ZONE_MIN, value))
 end
 
+---Onde o jogador está: anda até o lugar, olha para onde o operador deve olhar e aperte E.
+---Para pontos em que a mira não acerta (chassi sem colisão) e que são "onde a pessoa fica".
+---@return { coords: { x: number, y: number, z: number }, heading: number }|nil
+function GuinchoPlacer.here()
+	if active then return nil end
+	active = true
+	hud({ mode = 'here' })
+	local color = accent()
+	local result
+	while active do
+		block()
+		local c, h = GetEntityCoords(cache.ped), GetEntityHeading(cache.ped)
+		local pe = vec3(c.x, c.y, c.z - 0.98)
+		DrawMarker(25, pe.x, pe.y, pe.z + 0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.8, 0.8, color[1], color[2], color[3], 180, false, false, 2, false, nil, nil, false)
+		drawArrow(vec3(pe.x, pe.y, pe.z - 0.4), h, color)
+		if IsControlJustPressed(0, KEY.mark) then
+			PlaySoundFrontend(-1, 'SELECT', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+			result = { coords = { x = pe.x, y = pe.y, z = pe.z }, heading = math.floor(h * 100 + 0.5) / 100 }
+			break
+		elseif IsDisabledControlJustPressed(0, KEY.cancel) or IsControlJustPressed(0, KEY.undo) then
+			PlaySoundFrontend(-1, 'BACK', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+			releaseEsc()
+			break
+		end
+		Wait(0)
+	end
+	active = false
+	hud(false)
+	return result
+end
+
 function GuinchoPlacer.isActive()
 	return active
 end

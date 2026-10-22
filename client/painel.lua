@@ -10,7 +10,7 @@ local PERMITIDAS = { dados = true, salvar = true, novo = true, remover = true }
 -- Pontos que o painel marca e como cada um é marcado
 local PONTOS = {
     motor = { ferramenta = 'ponto' },
-    caixa = { ferramenta = 'ponto' },
+    caixa = { ferramenta = 'aqui' },
     carga = { ferramenta = 'carro' },
     rampa = { ferramenta = 'ponto', inclinada = true },
     engate = { ferramenta = 'ponto' },
@@ -102,6 +102,8 @@ RegisterNUICallback('painelMarcar', function(d, cb)
         local r
         if regra.ferramenta == 'carro' then
             r = GuinchoPlacer.point({ vehicle = CARRO_PREVIA, heading = GetEntityHeading(caminhao) })
+        elseif regra.ferramenta == 'aqui' then
+            r = GuinchoPlacer.here()
         else
             r = GuinchoPlacer.point({})
         end

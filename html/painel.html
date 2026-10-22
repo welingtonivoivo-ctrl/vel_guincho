@@ -36,7 +36,7 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
 .ponto { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; background: var(--card2); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
 .ponto .t1 { font-weight: 600; }
 .tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; background: #222a35; color: var(--suave); }
-.tag.ok { background: #183225; color: var(--verde); } .tag.falta { background: #3a2f17; color: var(--ouro2); }
+.tag.ok { background: #183225; color: var(--verde); } .tag.falta { background: #3a2f17; color: #f0c674; }
 .empregos { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 4px 12px; max-height: 220px; overflow: auto; }
 .empregos label { display: flex; gap: 8px; align-items: center; padding: 3px 0; color: var(--texto); font-size: 13px; }
 .vazio { color: var(--suave); padding: 30px 6px; }
@@ -78,7 +78,7 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
     const CABOS = { curto: 'Curto (10 m)', medio: 'Médio (15 m)', longo: 'Longo (25 m)' };
     const PONTOS = [
         ['motor', 'Motor do guincho', 'Onde o cabo sai (frente da plataforma). Mire na peça do motor.', (c) => c.tipo === 'plataforma'],
-        ['caixa', 'Caixa de comando', 'Onde o operador fica para puxar, soltar e inclinar (lateral). Mire na lateral do caminhão.', () => true],
+        ['caixa', 'Caixa de comando', 'Onde o operador fica em pé para puxar, soltar e inclinar. Fique no lugar, olhe para o caminhão e aperte E.', () => true],
         ['carga', 'Posição de carga', 'Onde o carro fica preso em cima da plataforma. Aparece um carro-fantasma: mire na plataforma e gire com ← →.', (c) => c.tipo === 'plataforma'],
         ['rampa', 'Início da rampa', 'Onde o carro começa a subir (chão atrás da plataforma). Se a plataforma inclina, ela desce sozinha para você marcar.', (c) => c.tipo === 'plataforma'],
         ['engate', 'Engate do gancho', 'Ponto de engate na traseira do caminhão.', (c) => c.tipo === 'gancho'],
