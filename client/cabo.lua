@@ -228,7 +228,7 @@ local function montarCabo(veiculo, c, s)
     end
     -- corda só visual: as pontas são presas a cada quadro (presa a entidades a corda puxa de verdade
     -- e arremessa o caminhão); quem move o carro é o sistema, de forma controlada
-    local comprimento = math.max(1.0, #(motor - ponto))
+    local comprimento = math.max(0.5, #(motor - ponto) * 0.97)
     local corda = AddRope(motor.x, motor.y, motor.z, 0.0, 0.0, 0.0, caboMax(c) + 2.0, 4, comprimento, 0.5, 1.0, false, false, false, 1.0, false)
     cabos[veiculo] = { assinatura = json.encode(s), corda = corda, gancho = gancho, alvo = alvo, ponto = s.ponto, c = c }
 end
@@ -247,7 +247,7 @@ local function atualizarCabos(meuId)
                 if cb and cb.corda and DoesRopeExist(cb.corda) then
                     local motor = motorNoMundo(veiculo, info.c)
                     local fim = cb.gancho and GetEntityCoords(cb.gancho) or pontoDoCarro(cb.alvo, cb.ponto)
-                    if motor and fim then RopeForceLength(cb.corda, math.min(caboMax(info.c) + 2.0, #(motor - fim) + 0.3)) end
+                    if motor and fim then RopeForceLength(cb.corda, math.max(0.5, #(motor - fim) * 0.97)) end
                 end
             end
         end
