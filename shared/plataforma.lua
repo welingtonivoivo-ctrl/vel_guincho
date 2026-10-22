@@ -19,6 +19,8 @@ local CANDIDATOS = {
 ---@param mecanismo string
 ---@param pos number 0.0 a 1.0
 function Plataforma.mover(veiculo, mecanismo, pos)
+    -- o jogo só aplica a peça móvel para quem controla o veículo na rede (fora da cabine não controla)
+    if not NetworkHasControlOfEntity(veiculo) then NetworkRequestControlOfEntity(veiculo) end
     if mecanismo == 'garfo' then
         SetForkliftForkHeight(veiculo, pos)
     elseif mecanismo == 'braco' then

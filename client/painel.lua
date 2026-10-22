@@ -67,6 +67,12 @@ end
 ---Leva a plataforma de 'de' até 'ate' (caminhão travado enquanto ela se move).
 local function moverPlataforma(caminhao, mecanismo, de, ate)
     if mecanismo == 'fixa' then return end
+    -- pede o controle do caminhão e espera até 1 s (sem ele o jogo ignora a plataforma)
+    local limite = GetGameTimer() + 1000
+    while not NetworkHasControlOfEntity(caminhao) and GetGameTimer() < limite do
+        NetworkRequestControlOfEntity(caminhao)
+        Wait(0)
+    end
     FreezeEntityPosition(caminhao, true)
     local inicio = GetGameTimer()
     while true do
