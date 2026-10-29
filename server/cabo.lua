@@ -89,8 +89,11 @@ lib.callback.register('vel_guincho:cabo:engatar', function(source, netCaminhao, 
     if ponto ~= 'frente' and ponto ~= 'tras' and ponto ~= 'lado' then return false end
     local c = cadastroDe(caminhao)
     if not c then return false end
-    -- guincho portátil só desvira
-    if c.tipo == 'portatil' and ponto ~= 'lado' then return false, 'portatil_so_desvira' end
+    -- guincho portátil em árvore, poste ou parede só desvira; preso na frente de um carro também arrasta
+    if c.tipo == 'portatil' and (Entity(caminhao).state.velPortatil or {}).veiculo == netCarro then return false end
+    if c.tipo == 'portatil' and ponto ~= 'lado' and not (Entity(caminhao).state.velPortatil or {}).veiculo then
+        return false, 'portatil_so_desvira'
+    end
     -- medido do centro: aeronaves e carros longos têm as pontas a mais de 4 m do centro
     if distancia(source, carro) > 8.0 then return false, 'longe' end
     if #(GetEntityCoords(carro) - GetEntityCoords(caminhao)) > (Config.Cabo[c.cabo] or 15.0) + 8.0 then return false, 'cabo_curto' end
@@ -134,7 +137,12 @@ AddEventHandler('playerDropped', function()
         local caminhao = entidade(netId)
         local s = caminhao and Entity(caminhao).state.velCabo
         if not s then comCabo[netId] = nil
-        elseif s.mao == src then definir(caminhao, nil) end
+        elseif s.mao == src then definir(caminhao, nil)
+        elseif s.fase and s.por == src then
+            -- saiu no meio de puxar/arrastar: libera a fase para alguém soltar o cabo
+            s.fase = nil
+            definir(caminhao, s)
+        end
     end
 end)
 
@@ -171,6 +179,38 @@ lib.callback.register('vel_guincho:carga:concluir', function(source, netCaminhao
         s.carga = s.fase == 'subindo' or nil
         Guincho.log(source, s.carga and 'carregou' or 'descarregou', entidade(s.carro), cadastroDe(caminhao))
     end
+    s.fase = nil
+    definir(caminhao, s)
+    return true
+end)
+
+-- Arrastar (Etapa 7C): o guincho frontal e o portátil preso num carro puxam o carro pelo chão.
+-- Quem pede anima o carro no próprio cliente; o servidor guarda a fase (bloqueia soltar no meio).
+local function arrasta(caminhao, c)
+    if c.tipo == 'frontal' then return true end
+    return c.tipo == 'portatil' and (Entity(caminhao).state.velPortatil or {}).veiculo ~= nil
+end
+
+lib.callback.register('vel_guincho:arrastar:comando', function(source, netCaminhao)
+    if cedo(source) then return false end
+    local caminhao = entidade(netCaminhao)
+    local s = caminhao and Entity(caminhao).state.velCabo
+    if not s or not s.carro or s.fase or s.desvirar then return false end
+    local c = cadastroDe(caminhao)
+    if not c or not arrasta(caminhao, c) then return false end
+    local ok, motivo = Guincho.podeOperar(source, c)
+    if not ok then return false, motivo end
+    if distancia(source, caminhao) > 10.0 then return false, 'longe' end
+    s.fase, s.por = 'arrastando', source
+    definir(caminhao, s)
+    return true
+end)
+
+lib.callback.register('vel_guincho:arrastar:concluir', function(source, netCaminhao, sucesso)
+    local caminhao = entidade(netCaminhao)
+    local s = caminhao and Entity(caminhao).state.velCabo
+    if not s or s.fase ~= 'arrastando' or s.por ~= source then return false end
+    if sucesso then Guincho.log(source, 'arrastou', entidade(s.carro), cadastroDe(caminhao)) end
     s.fase = nil
     definir(caminhao, s)
     return true

@@ -73,12 +73,12 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
     function toast(t, tipo) { const e = $('#toast'); e.textContent = t; e.className = 'on ' + (tipo || ''); clearTimeout(tt); tt = setTimeout(() => e.className = '', 3200); }
     function resposta(r) { if (!r || r.erro) { toast(r && r.erro || 'Erro.', 'erro'); return false; } if (r.msg) toast(r.msg, 'ok'); return true; }
 
-    const TIPOS = { plataforma: 'Plataforma', gancho: 'Gancho (arrasta)' };
+    const TIPOS = { plataforma: 'Plataforma', gancho: 'Gancho (arrasta)', frontal: 'Guincho frontal (viatura)' };
     const MEC = { fixa: 'Fixa (rampa virtual)', garfo: 'Inclina — garfo', braco: 'Inclina — braço de reboque', escavadeira: 'Inclina — escavadeira', cabine: 'Inclina — pela cabine (teclas do motorista)' };
     const CABOS = { curto: 'Curto (10 m)', medio: 'Médio (15 m)', longo: 'Longo (25 m)' };
     const PONTOS = [
-        ['motor', 'Motor do guincho', 'Onde o cabo sai (frente da plataforma). Mire na peça do motor.', (c) => c.tipo === 'plataforma'],
-        ['caixa', 'Caixa de comando', 'Onde o operador fica em pé para puxar, soltar e inclinar. Fique no lugar, olhe para o caminhão e aperte E.', () => true],
+        ['motor', 'Motor do guincho', 'Onde o cabo sai. Plataforma: frente da plataforma. Guincho frontal: o guincho no para-choque. Mire na peça do motor.', (c) => c.tipo === 'plataforma' || c.tipo === 'frontal'],
+        ['caixa', 'Caixa de comando', 'Onde o operador fica em pé para puxar, soltar e inclinar. Fique no lugar, olhe para o caminhão e aperte E.', (c) => c.tipo !== 'frontal'],
         ['carga', 'Posição de carga', 'Onde o carro fica preso em cima da plataforma. Um carro-fantasma aparece no centro do caminhão: ↑ ↓ frente/trás, Shift + ↑ ↓ altura.', (c) => c.tipo === 'plataforma'],
         ['rampa', 'Início da rampa', 'Onde o carro começa a subir (chão atrás da plataforma). Se a plataforma inclina, ela desce sozinha para você marcar.', (c) => c.tipo === 'plataforma'],
         ['engate', 'Engate do gancho', 'Ponto de engate na traseira do caminhão.', (c) => c.tipo === 'gancho'],
@@ -133,7 +133,8 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
         if (!c) { $('#editor').innerHTML = '<div class="vazio">Escolha um caminhão na lista.</div>'; return; }
         const inc = Math.round((c.pontos.inclinacao || 1) * 100);
         $('#editor').innerHTML = `
-        <p class="ajuda">Fique perto de um <b>${esc(c.nome)}</b> (spawn <b>${esc(c.modelo)}</b>) para marcar os pontos e testar a plataforma. Os pontos valem para todos os caminhões desse modelo.</p>
+        <p class="ajuda">Fique perto de um <b>${esc(c.nome)}</b> (spawn <b>${esc(c.modelo)}</b>) para marcar os pontos e testar a plataforma. Os pontos valem para todos os caminhões desse modelo.
+            ${c.tipo === 'frontal' ? ' <b>Guincho frontal:</b> para viaturas com guincho no para-choque. Marque só o motor; o cabo arrasta o carro até a viatura e desvira, e a viatura fica freada enquanto o cabo está engatado.' : ''}</p>
         <div class="card"><h3>Cadastro</h3><div class="grade">
             <div><label>Nome</label><input id="e-nome" maxlength="64" value="${esc(c.nome)}"></div>
             <div><label>Tipo</label><select id="e-tipo">${Object.entries(TIPOS).map(([k, v]) => `<option value="${k}" ${c.tipo === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>

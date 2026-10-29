@@ -80,12 +80,20 @@
   "portatil_restam": "Carro desvirado. Restam %s usos no guincho.",
   "portatil_loja": "Guincho portátil (mecânica)",
   "portatil_so_desvira": "O guincho portátil só desvira carro capotado.",
-  "portatil_mire": "Mire num tronco, poste ou parede",
+  "portatil_mire": "Mire num tronco, poste, parede ou na frente de um carro",
   "portatil_em_pe": "Precisa ser uma superfície em pé (tronco, poste ou parede)",
   "portatil_perto": "Chegue mais perto para fixar",
   "portatil_fixado": "Guincho fixado. Pegue o cabo no motor.",
   "portatil_recolher": "Recolher guincho",
   "portatil_comprar": "Comprar guincho portátil",
   "loja_salva": "Balcão \"%s\" salvo.",
-  "loja_sem_nome": "Escreva o nome do balcão."
+  "loja_sem_nome": "Escreva o nome do balcão.",
+  "portatil_frente": "Mire na frente do carro (para-choque dianteiro)",
+  "portatil_ja_tem": "Este veículo já tem guincho de fábrica",
+  "portatil_carro_andando": "Pare o carro antes de fixar o guincho.",
+  "portatil_carro_ocupado": "Este carro já tem um guincho portátil preso.",
+  "portatil_caiu": "O carro andou com o guincho preso: ele caiu e se perdeu.",
+  "arrastar_carro": "Arrastar carro até o guincho",
+  "arrasto_preso": "O carro travou em algo e não sai do lugar.",
+  "arrastado": "Carro arrastado até o guincho."
 }

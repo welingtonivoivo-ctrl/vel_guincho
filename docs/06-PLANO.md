@@ -10,6 +10,7 @@
 | 6 | Gancho: engate automático na ré e soltar | `towtruck` reboca e solta |
 | 7 | Desvirar | Capotar um carro e desvirar |
 | 7B | Guincho portátil: item, prop fixado em árvore ou objeto, cabo, desvirar, desgaste de 10 usos, venda nas mecânicas | Fixar numa árvore e desvirar um carro |
+| 7C | Guincho frontal: tipo "frontal" no painel (viaturas dos bombeiros), arrastar pelo motor, guincho portátil fixado na frente de qualquer carro (cai e se perde se o carro andar) | Arrastar e desvirar com a viatura; fixar o portátil num carro, usar, recolher; andar com ele preso e ver cair |
 | 8 | Pátio: zonas no painel, entrega, aviso, log | Entregar no pátio e o policial apreender pelo mri_Qgarage |
 | 9 | Polimento AAA (sons, tempos, trilho), `mri-resource-check`, README e `TESTES-DONO.md` | Teste geral |
 | — | **Fim da v1**: relatório para a MRI, com o pedido de export de apreensão no `mri_Qgarage` | |

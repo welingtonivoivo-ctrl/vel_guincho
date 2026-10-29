@@ -1,7 +1,7 @@
 -- Aba "Guincho" do mri_Qadmin: cadastro dos caminhões e dos pontos. Tudo conferido aqui.
 
 local PONTOS = { motor = true, caixa = true, carga = true, rampa = true, engate = true }
-local TIPOS = { plataforma = true, gancho = true }
+local TIPOS = { plataforma = true, gancho = true, frontal = true }
 local MECANISMOS = { fixa = true, garfo = true, braco = true, escavadeira = true, cabine = true }
 
 local function quem(source)

@@ -168,20 +168,94 @@ local function operar(caminhao, acao)
 end
 
 ---Opções da caixa de comando (somadas às do cabo no mesmo caminhão).
-function GuinchoCarga.opcoes(caminhao, c, motor)
-    -- guincho portátil: o comando é no próprio motor e só desvira
-    if c.tipo == 'portatil' then
-        return {
-            {
-                name = 'vel_guincho_desvirar', icon = 'fa-solid fa-car-burst', label = locale('desvirar_caixa'), distance = 2.0, offsetAbsolute = motor,
-                canInteract = function(ent)
-                    local s = Entity(ent).state.velCabo
-                    return not operando and s and s.desvirar and not s.fase
-                end,
-                onSelect = function(data) CreateThread(function() desvirarPelaCaixa(data.entity or caminhao) end) end,
-            },
-        }
+-- Arrastar (Etapa 7C): o veículo do guincho fica parado e o cabo recolhe, puxando o carro pelo chão
+-- até perto do motor. Quem opera controla o carro na rede e dá velocidade a ele a cada quadro; o carro
+-- vai virando para o lado do cabo (engatado pela frente, a frente aponta para o guincho).
+local ARRASTO_VELOCIDADE = 1.2 -- m/s
+local ARRASTO_GIRO = 30.0      -- graus/s
+local ARRASTO_SOBRA = 1.2      -- metros entre o carro e o guincho no fim
+
+---Guincho que arrasta: o frontal das viaturas e o portátil preso na frente de um carro.
+local function arrasta(ent, c)
+    if c.tipo == 'frontal' then return true end
+    local p = c.tipo == 'portatil' and Entity(ent).state.velPortatil
+    return p and p.veiculo ~= nil or false
+end
+
+local function arrastar(ancora)
+    if operando then return end
+    local c = cadastroDe(ancora)
+    local s = Entity(ancora).state.velCabo
+    if not c or not s or not s.carro or s.desvirar then return end
+    local carro = NetworkGetEntityFromNetworkId(s.carro)
+    if not carro or carro == 0 or not DoesEntityExist(carro) then return end
+    local net = NetworkGetNetworkIdFromEntity(ancora)
+    local ok, motivo = lib.callback.await('vel_guincho:arrastar:comando', false, net)
+    if not ok then return notificar(motivo or 'pedido_invalido') end
+    operando = true
+    alavanca(true)
+    local sucesso, chave = controlar(carro), 'falhou_carga'
+    if sucesso then
+        local min, max = GetModelDimensions(GetEntityModel(carro))
+        local meio = (max.y - min.y) / 2
+        local inicio, ultimoPonto, ultimoTempo = GetGameTimer(), GetEntityCoords(carro), GetGameTimer()
+        sucesso = false
+        while DoesEntityExist(carro) and DoesEntityExist(ancora) do
+            local motor = GuinchoCabo.motorNoMundo(ancora, c)
+            local pos = GetEntityCoords(carro)
+            local para = vec3(motor.x - pos.x, motor.y - pos.y, 0.0)
+            local dist = #para
+            if dist <= meio + ARRASTO_SOBRA then sucesso, chave = true, nil break end
+            local dir = para / dist
+            local vz = GetEntityVelocity(carro).z
+            SetEntityVelocity(carro, dir.x * ARRASTO_VELOCIDADE, dir.y * ARRASTO_VELOCIDADE, vz)
+            -- vira aos poucos: a ponta engatada vai na frente
+            local alvo = math.deg(math.atan(-dir.x, dir.y)) + (s.ponto == 'tras' and 180.0 or 0.0)
+            local h = GetEntityHeading(carro)
+            local passo = math.max(-ARRASTO_GIRO, math.min(ARRASTO_GIRO, difAngulo(h, alvo))) * GetFrameTime()
+            SetEntityHeading(carro, h + passo)
+            -- preso (barranco, poste): não andou 20 cm em 3 s
+            local agora = GetGameTimer()
+            if agora - ultimoTempo > 3000 then
+                if #(pos - ultimoPonto) < 0.2 then chave = 'arrasto_preso' break end
+                ultimoPonto, ultimoTempo = pos, agora
+            end
+            if agora - inicio > 90000 then break end
+            Wait(0)
+        end
+        if DoesEntityExist(carro) then SetEntityVelocity(carro, 0.0, 0.0, 0.0) end
     end
+    alavanca(false)
+    lib.callback.await('vel_guincho:arrastar:concluir', false, net, sucesso)
+    operando = false
+    if sucesso then notificar('arrastado', 'success') else notificar(chave or 'falhou_carga') end
+end
+
+---Opções no motor do guincho frontal e do portátil: desvirar (todos) e arrastar (frontal e portátil no carro).
+local function opcoesMotor(caminhao, c, motor)
+    return {
+        {
+            name = 'vel_guincho_desvirar', icon = 'fa-solid fa-car-burst', label = locale('desvirar_caixa'), distance = 2.0, offsetAbsolute = motor,
+            canInteract = function(ent)
+                local s = Entity(ent).state.velCabo
+                return not operando and s and s.desvirar and not s.fase
+            end,
+            onSelect = function(data) CreateThread(function() desvirarPelaCaixa(data.entity or caminhao) end) end,
+        },
+        {
+            name = 'vel_guincho_arrastar', icon = 'fa-solid fa-angles-left', label = locale('arrastar_carro'), distance = 2.0, offsetAbsolute = motor,
+            canInteract = function(ent)
+                local s = Entity(ent).state.velCabo
+                return not operando and s and s.carro and not s.desvirar and not s.fase and arrasta(ent, c)
+            end,
+            onSelect = function(data) CreateThread(function() arrastar(data.entity or caminhao) end) end,
+        },
+    }
+end
+
+function GuinchoCarga.opcoes(caminhao, c, motor)
+    -- guincho portátil e frontal: o comando é no próprio motor
+    if c.tipo == 'portatil' or c.tipo == 'frontal' then return opcoesMotor(caminhao, c, motor) end
     local caixa = c.pontos.caixa
     if not caixa or c.tipo ~= 'plataforma' then return {} end
     local onde = vec3(caixa.x, caixa.y, caixa.z + 1.0) -- marcada nos pés: o comando fica na altura da mão

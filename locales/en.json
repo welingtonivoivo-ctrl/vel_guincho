@@ -80,12 +80,20 @@
   "portatil_restam": "Car flipped back. %s uses left on the winch.",
   "portatil_loja": "Portable winch (mechanic)",
   "portatil_so_desvira": "The portable winch only flips overturned cars.",
-  "portatil_mire": "Aim at a tree trunk, pole or wall",
+  "portatil_mire": "Aim at a tree trunk, pole, wall or the front of a car",
   "portatil_em_pe": "It must be a standing surface (trunk, pole or wall)",
   "portatil_perto": "Get closer to fix it",
   "portatil_fixado": "Winch fixed. Take the cable at the motor.",
   "portatil_recolher": "Pack winch",
   "portatil_comprar": "Buy portable winch",
   "loja_salva": "Counter \"%s\" saved.",
-  "loja_sem_nome": "Write the counter name."
+  "loja_sem_nome": "Write the counter name.",
+  "portatil_frente": "Aim at the front of the car (front bumper)",
+  "portatil_ja_tem": "This vehicle already has a built-in winch",
+  "portatil_carro_andando": "Stop the car before fixing the winch.",
+  "portatil_carro_ocupado": "This car already has a portable winch attached.",
+  "portatil_caiu": "The car moved with the winch attached: it fell off and was lost.",
+  "arrastar_carro": "Drag car to the winch",
+  "arrasto_preso": "The car is stuck on something and will not move.",
+  "arrastado": "Car dragged to the winch."
 }

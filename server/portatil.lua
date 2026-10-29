@@ -58,8 +58,14 @@ local function numero(v)
     return v and v == v and v or nil
 end
 
--- Fixar o motor no ponto mirado (pos = mundo, rot = graus)
-lib.callback.register('vel_guincho:portatil:fixar', function(source, slot, pos, rot)
+local function veiculoDe(net)
+    local e = tonumber(net) and NetworkGetEntityFromNetworkId(net)
+    return e and e ~= 0 and DoesEntityExist(e) and GetEntityType(e) == 2 and e or nil
+end
+
+-- Fixar o motor no ponto mirado (pos = mundo, rot = graus). Na frente de um carro: netVeiculo e
+-- off (posição relativa ao carro); o cliente de quem montou prende o motor no carro.
+lib.callback.register('vel_guincho:portatil:fixar', function(source, slot, pos, rot, netVeiculo, off)
     if cedo(source) then return false end
     slot = tonumber(slot)
     if not slot or type(pos) ~= 'table' or type(rot) ~= 'table' then return false, 'pedido_invalido' end
@@ -71,6 +77,18 @@ lib.callback.register('vel_guincho:portatil:fixar', function(source, slot, pos, 
     if not item or item.name ~= P.item then return false, 'portatil_sem_item' end
     local ped = GetPlayerPed(source)
     if #(GetEntityCoords(ped) - vec3(x, y, z)) > P.alcance + 1.5 then return false, 'longe' end
+    local veiculo, offset = nil, nil
+    if netVeiculo ~= nil then
+        veiculo = veiculoDe(netVeiculo)
+        if not veiculo or type(off) ~= 'table' then return false, 'pedido_invalido' end
+        local ox, oy, oz = numero(off.x), numero(off.y), numero(off.z)
+        if not (ox and oy and oz) or math.abs(ox) > 3 or math.abs(oy) > 10 or math.abs(oz) > 3 then return false, 'pedido_invalido' end
+        if GetEntitySpeed(veiculo) > 1.0 then return false, 'portatil_carro_andando' end
+        for _, m in pairs(montados) do
+            if m.veiculo == netVeiculo then return false, 'portatil_carro_ocupado' end
+        end
+        offset = { x = ox, y = oy, z = oz }
+    end
     local usos = math.floor(tonumber(item.metadata and item.metadata.usos) or P.usos)
     if usos <= 0 then return false, 'portatil_quebrado' end
     if not exports.ox_inventory:RemoveItem(source, P.item, 1, nil, slot) then return false, 'portatil_sem_item' end
@@ -83,13 +101,53 @@ lib.callback.register('vel_guincho:portatil:fixar', function(source, slot, pos, 
         return false, 'falhou_portatil'
     end
     SetEntityRotation(obj, rx, ry, rz, 2, true)
+    -- nasce congelado (não cai antes de ser preso); no carro, o cliente prende e descongela
     FreezeEntityPosition(obj, true)
     local net = NetworkGetNetworkIdFromEntity(obj)
-    montados[net] = { obj = obj, dono = source, usos = usos }
-    Entity(obj).state:set('velPortatil', { dono = source, usos = usos }, true)
+    local nv = veiculo and tonumber(netVeiculo) or nil
+    montados[net] = { obj = obj, dono = source, usos = usos, veiculo = nv }
+    Entity(obj).state:set('velPortatil', { dono = source, usos = usos, veiculo = nv, off = offset }, true)
     publicar()
-    Guincho.log(source, 'portatil_fixou', nil, { modelo = P.modelo })
-    return true
+    Guincho.log(source, 'portatil_fixou', veiculo, { modelo = P.modelo })
+    return true, net
+end)
+
+---O carro andou com o guincho preso: o guincho cai no chão e se perde (o item não volta).
+local function perder(net, m)
+    local pos = GetEntityCoords(m.obj)
+    local rot = GetEntityRotation(m.obj, 2)
+    DeleteEntity(m.obj)
+    montados[net] = nil
+    publicar()
+    -- o que cai: só para ver, sem dono e sem opções; some depois de 20 s
+    local caido = CreateObjectNoOffset(MODELO, pos.x, pos.y, pos.z, true, true, false)
+    local limite = GetGameTimer() + 2000
+    while not DoesEntityExist(caido) and GetGameTimer() < limite do Wait(0) end
+    if DoesEntityExist(caido) then
+        SetEntityRotation(caido, rot.x, rot.y, rot.z, 2, true)
+        SetTimeout(20000, function() if DoesEntityExist(caido) then DeleteEntity(caido) end end)
+    end
+    if m.dono and GetPlayerPing(m.dono) > 0 then
+        TriggerClientEvent('ox_lib:notify', m.dono, { title = locale('painel_titulo'), description = locale('portatil_caiu'), type = 'error' })
+    end
+end
+
+-- Vigia os guinchos presos em carros: andou (mais de ~7 km/h) ou o carro sumiu = caiu
+CreateThread(function()
+    while true do
+        local espera, caiu = 2000, {}
+        for net, m in pairs(montados) do
+            if m.veiculo then
+                espera = 500
+                local v = veiculoDe(m.veiculo)
+                if DoesEntityExist(m.obj) and (not v or GetEntitySpeed(v) > 2.0) then caiu[#caiu + 1] = net end
+            end
+        end
+        for _, net in ipairs(caiu) do
+            if montados[net] then perder(net, montados[net]) end
+        end
+        Wait(espera)
+    end
 end)
 
 ---Recolher o motor: só o dono (ou qualquer um, se o dono saiu do jogo). Cabo tem que estar solto.

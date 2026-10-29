@@ -1,5 +1,7 @@
 -- Etapa 7B: guincho portátil. Usar o item abre a mira: o motor-fantasma encosta na superfície
 -- mirada (tronco, poste ou parede: só superfície em pé, perto do jogador). E fixa, setas giram, Esc cancela.
+-- Etapa 7C: mirando na frente de um carro, o motor vai para o para-choque e fica preso ao carro
+-- (lá também arrasta). Se o carro andar, o servidor derruba o guincho e ele se perde.
 -- Depois de fixo, o motor funciona como o de um caminhão (client/cabo.lua): pegar cabo, engatar no
 -- carro capotado, "Puxar cabo para desvirar" no motor e "Recolher guincho".
 
@@ -32,16 +34,37 @@ end
 
 ---Mira: devolve posição e giro do motor encostado na superfície, ou nil (com o motivo).
 ---mira = { coords, normal } lidos pela linha da mira (o raycast do ox_lib espera um quadro).
+local function cadastroDe(veiculo)
+    local estado = GlobalState.velGuincho
+    return estado and estado.caminhoes and estado.caminhoes[tostring(GetEntityModel(veiculo))]
+end
+
+---Na frente de um carro: o fundo do motor encosta no para-choque, na altura dele, virado para a frente.
+local function mirarCarro(veiculo, coords, min, max)
+    local vmin, vmax = GetModelDimensions(GetEntityModel(veiculo))
+    local onde = GetOffsetFromEntityGivenWorldCoords(veiculo, coords.x, coords.y, coords.z)
+    if onde.y < vmax.y * 0.5 then return nil, 'portatil_frente' end
+    local c = cadastroDe(veiculo)
+    if c and c.tipo == 'frontal' then return nil, 'portatil_ja_tem' end
+    local off = vec3(0.0, vmax.y - min.y - 0.05, vmin.z + 0.55 - (min.z + max.z) / 2)
+    local pos = GetOffsetFromEntityInWorldCoords(veiculo, off.x, off.y, off.z)
+    return { pos = pos, rot = GetEntityRotation(veiculo, 2), ponto = coords, veiculo = veiculo, off = off }
+end
+
 local function mirar(mira, min, max, giro)
     local coords, normal = mira.coords, mira.normal
     if not coords or not normal then return nil, 'portatil_mire' end
+    if mira.entidade and mira.entidade ~= 0 and GetEntityType(mira.entidade) == 2 then
+        if #(GetEntityCoords(cache.ped) - coords) > P.alcance then return nil, 'portatil_perto' end
+        return mirarCarro(mira.entidade, coords, min, max)
+    end
     if math.abs(normal.z) > 0.5 then return nil, 'portatil_em_pe' end
     if #(GetEntityCoords(cache.ped) - coords) > P.alcance then return nil, 'portatil_perto' end
     local n = norm(vec3(normal.x, normal.y, 0.0))
     -- frente do motor (eixo Y) para fora da superfície; o fundo encosta nela
     local heading = math.deg(math.atan(-n.x, n.y)) + giro
     local pos = coords + n * (-min.y) - vec3(0.0, 0.0, (min.z + max.z) / 2)
-    return { pos = pos, heading = heading % 360.0, ponto = coords }
+    return { pos = pos, rot = vec3(0.0, 0.0, heading % 360.0), ponto = coords }
 end
 
 local function montar(slot)
@@ -60,9 +83,10 @@ local function montar(slot)
     local mira = {}
     CreateThread(function()
         while montando do
-            local hit, _, coords, normal = lib.raycast.fromCamera(1 | 16, 4, 6.0)
+            local hit, entidade, coords, normal = lib.raycast.fromCamera(1 | 2 | 16, 4, 6.0)
             mira.coords = hit and coords or nil
             mira.normal = hit and normal or nil
+            mira.entidade = hit and entidade or nil
         end
     end)
 
@@ -76,7 +100,7 @@ local function montar(slot)
         if alvo then
             SetEntityVisible(fantasma, true, false)
             SetEntityCoordsNoOffset(fantasma, alvo.pos.x, alvo.pos.y, alvo.pos.z, false, false, false)
-            SetEntityRotation(fantasma, 0.0, 0.0, alvo.heading, 2, true)
+            SetEntityRotation(fantasma, alvo.rot.x, alvo.rot.y, alvo.rot.z, 2, true)
         else
             SetEntityVisible(fantasma, false, false)
             local frente = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 1.5, 0.5)
@@ -102,18 +126,57 @@ local function montar(slot)
             TaskPlayAnim(cache.ped, ANIM.dict, ANIM.clip, 4.0, -4.0, 2500, 1, 0, false, false, false)
             Wait(2500)
         end
-        local p = escolhido.pos
-        local ok, erro = lib.callback.await('vel_guincho:portatil:fixar', false, slot,
-            { x = p.x, y = p.y, z = p.z }, { x = 0.0, y = 0.0, z = escolhido.heading })
+        local p, r, o = escolhido.pos, escolhido.rot, escolhido.off
+        local netVeiculo = escolhido.veiculo and DoesEntityExist(escolhido.veiculo) and NetworkGetNetworkIdFromEntity(escolhido.veiculo) or nil
+        local ok, resposta = lib.callback.await('vel_guincho:portatil:fixar', false, slot,
+            { x = p.x, y = p.y, z = p.z }, { x = r.x, y = r.y, z = r.z }, netVeiculo, o and { x = o.x, y = o.y, z = o.z } or nil)
+        if ok and netVeiculo then GuinchoPortatil.prender(resposta) end -- resposta = netId do motor
         if ok then
             PlaySoundFrontend(-1, 'Hook_Attach', 'DLC_IE_Steal_Cargobob_Sounds', true)
             notificar('portatil_fixado', 'success')
         else
-            notificar(erro or 'pedido_invalido')
+            notificar(resposta or 'pedido_invalido')
         end
     end
     montando = false
 end
+
+---Prende o motor (netId) ao carro do statebag; quem tem o controle do motor faz (o resto vê pela rede).
+function GuinchoPortatil.prender(net)
+    local limite = GetGameTimer() + 3000
+    while not NetworkDoesNetworkIdExist(net) and GetGameTimer() < limite do Wait(0) end
+    if not NetworkDoesNetworkIdExist(net) then return end
+    local obj = NetworkGetEntityFromNetworkId(net)
+    local p = Entity(obj).state.velPortatil
+    local veiculo = p and p.veiculo and NetworkDoesNetworkIdExist(p.veiculo) and NetworkGetEntityFromNetworkId(p.veiculo) or 0
+    if veiculo == 0 or not p.off then return end
+    while not NetworkHasControlOfEntity(obj) and GetGameTimer() < limite do
+        NetworkRequestControlOfEntity(obj)
+        Wait(0)
+    end
+    if not NetworkHasControlOfEntity(obj) then return end
+    AttachEntityToEntity(obj, veiculo, 0, p.off.x, p.off.y, p.off.z, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+    FreezeEntityPosition(obj, false)
+end
+
+-- Quem passa a controlar um motor de carro (troca de dono na rede) confere se ele continua preso
+local portateis = GlobalState.velPortateis or {}
+AddStateBagChangeHandler('velPortateis', 'global', function(_, _, valor) portateis = valor or {} end)
+CreateThread(function()
+    while true do
+        for _, net in ipairs(portateis) do
+            if NetworkDoesNetworkIdExist(net) then
+                local obj = NetworkGetEntityFromNetworkId(net)
+                local p = obj ~= 0 and Entity(obj).state.velPortatil
+                if p and p.veiculo and NetworkHasControlOfEntity(obj) and NetworkDoesNetworkIdExist(p.veiculo)
+                    and GetEntityAttachedTo(obj) ~= NetworkGetEntityFromNetworkId(p.veiculo) then
+                    CreateThread(function() GuinchoPortatil.prender(net) end)
+                end
+            end
+        end
+        Wait(1000)
+    end
+end)
 
 RegisterNetEvent('vel_guincho:portatil:montar', function(slot)
     if GetInvokingResource() then return end

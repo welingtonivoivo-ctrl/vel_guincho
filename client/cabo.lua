@@ -190,8 +190,10 @@ CreateThread(function()
             canInteract = function(ent)
                 -- carro tombado: só "para desvirar" (no meio do carro); em pé: frente ou traseira
                 if meuCabo == nil or ent == meuCabo or caminhaoDoCarro(ent) then return false end
+                if (Entity(meuCabo).state.velPortatil or {}).veiculo == NetworkGetNetworkIdFromEntity(ent) then return false end
                 local info = caminhoes[meuCabo]
-                if info and info.c.tipo == 'portatil' and ponto ~= 'lado' then return false end
+                -- portátil na árvore só desvira; preso na frente de um carro também arrasta
+                if info and info.c.tipo == 'portatil' and ponto ~= 'lado' and not (Entity(meuCabo).state.velPortatil or {}).veiculo then return false end
                 return (ponto == 'lado') == GuinchoTombado(ent)
             end,
             onSelect = function(data) CreateThread(function() engatar(data.entity, ponto) end) end,
