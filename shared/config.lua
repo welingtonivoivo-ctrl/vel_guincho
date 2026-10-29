@@ -37,7 +37,7 @@ Config.Portatil = {
     modelo = 'prop_bison_winch',
     usos = 10,
     cabo = 'medio',          -- comprimento do cabo (Config.Cabo)
-    alcance = 2.5,           -- distância máxima do jogador até onde fixa (m)
+    alcance = 3.0,           -- distância máxima do jogador até onde fixa (m)
     preco = 2500,
     empregosLoja = { 'mecanica_centro', 'mechanic' },
 }

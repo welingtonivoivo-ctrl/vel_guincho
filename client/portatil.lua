@@ -13,6 +13,7 @@ local ANIM = { dict = 'anim@amb@clubhouse@tutorial@bkr_tut_ig3@', clip = 'machin
 local BLOQUEADOS = { 14, 15, 16, 17, 24, 25, 37, 44, 140, 141, 142, 200 }
 local TECLA = { fixar = 38, cancelar = 200, voltar = 177, esquerda = 174, direita = 175 }
 local GIRO_VELOCIDADE = 90.0
+local COR_OK, COR_NAO = { 0, 230, 153 }, { 230, 60, 60 }
 local montando = false
 
 local function notificar(chave, tipo, ...)
@@ -83,7 +84,8 @@ local function montar(slot)
     local mira = {}
     CreateThread(function()
         while montando do
-            local hit, entidade, coords, normal = lib.raycast.fromCamera(1 | 2 | 16, 4, 6.0)
+            -- da câmera (em terceira pessoa ela fica uns 4 m atrás do personagem)
+            local hit, entidade, coords, normal = lib.raycast.fromCamera(1 | 2 | 16, 4, 12.0)
             mira.coords = hit and coords or nil
             mira.normal = hit and normal or nil
             mira.entidade = hit and entidade or nil
@@ -97,14 +99,21 @@ local function montar(slot)
         if IsControlPressed(0, TECLA.esquerda) then giro = giro + GIRO_VELOCIDADE * frame end
         if IsControlPressed(0, TECLA.direita) then giro = giro - GIRO_VELOCIDADE * frame end
         local alvo, motivo = mirar(mira, min, max, giro)
+        -- bolinha onde a mira acerta: verde = dá para fixar, vermelha = não dá (com o motivo ao lado)
+        local ponto = mira.coords
+        if ponto then
+            local cor = alvo and COR_OK or COR_NAO
+            DrawMarker(28, ponto.x, ponto.y, ponto.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.08, 0.08, 0.08,
+                cor[1], cor[2], cor[3], 220, false, false, 2, false, nil, nil, false)
+        end
         if alvo then
             SetEntityVisible(fantasma, true, false)
             SetEntityCoordsNoOffset(fantasma, alvo.pos.x, alvo.pos.y, alvo.pos.z, false, false, false)
             SetEntityRotation(fantasma, alvo.rot.x, alvo.rot.y, alvo.rot.z, 2, true)
         else
             SetEntityVisible(fantasma, false, false)
-            local frente = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 1.5, 0.5)
-            legenda(frente, locale(motivo))
+            local onde = ponto and vec3(ponto.x, ponto.y, ponto.z + 0.3) or GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 1.5, 0.5)
+            legenda(onde, locale(motivo))
         end
         if IsControlJustPressed(0, TECLA.fixar) and alvo then
             escolhido = alvo
