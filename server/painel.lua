@@ -36,7 +36,7 @@ function F.dados()
     end
     table.sort(empregos, function(a, b) return a.rotulo < b.rotulo end)
     return { caminhoes = lista, empregos = empregos, cabos = Config.Cabo, lojas = Banco.lojas(),
-        portatil = { preco = Config.Portatil.preco, usos = Config.Portatil.usos, empregos = Config.Portatil.empregosLoja } }
+        portatil = Banco.ajustes() }
 end
 
 function F.novo(source, modelo, rotulo)
@@ -138,6 +138,34 @@ function F.lojaNova(source, nome, d)
         { nome, json.encode({ x = x, y = y, z = z, h = numero(d.h, 0, 360) or 0.0 }), quem(source) })
     Guincho.publicar()
     return { msg = locale('loja_salva', nome) }
+end
+
+---Ajustes do guincho portátil e do arrastar (valem na hora para todos; itens já vendidos mantêm os usos deles).
+function F.ajustes(source, d)
+    if type(d) ~= 'table' then return { erro = locale('pedido_invalido') } end
+    local function inteiro(x, min, max)
+        x = numero(x, min, max)
+        return x and math.floor(x + 0.5)
+    end
+    local v = {
+        usos = inteiro(d.usos, 1, 100),
+        preco = inteiro(d.preco, 0, 1000000),
+        alcance = numero(d.alcance, 1.5, 6.0),
+        cabo = Config.Cabo[d.cabo] and d.cabo or nil,
+        quedaKmh = numero(d.quedaKmh, 5, 200),
+        arrasto = numero(d.arrasto, 0.3, 4.0),
+        empregosLoja = {},
+    }
+    for _, e in ipairs(type(d.empregosLoja) == 'table' and d.empregosLoja or {}) do
+        if type(e) == 'string' and e:match('^[%w_]+$') and #v.empregosLoja < 20 then v.empregosLoja[#v.empregosLoja + 1] = e end
+    end
+    for _, k in ipairs(Banco.AJUSTAVEIS) do
+        if v[k] == nil then return { erro = locale('pedido_invalido') } end
+    end
+    Banco.salvarAjustes(v, quem(source))
+    Guincho.publicar()
+    Portatil.registrarLoja()
+    return { msg = locale('salvo') }
 end
 
 function F.lojaRemover(source, id)

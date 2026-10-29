@@ -5,7 +5,7 @@
 local PLUGIN = 'vel_guincho'
 local PERTO = 15.0
 local CARRO_PREVIA = 'sultan'
-local PERMITIDAS = { dados = true, salvar = true, novo = true, remover = true, lojaRemover = true }
+local PERMITIDAS = { dados = true, salvar = true, novo = true, remover = true, lojaRemover = true, ajustes = true }
 
 -- Pontos que o painel marca e como cada um é marcado
 local PONTOS = {

@@ -31,6 +31,8 @@ Config.Semente = {
 
 -- Guincho portátil (item): qualquer jogador fixa numa árvore, poste ou parede e desvira um carro.
 -- Desgasta: cada desvirada gasta 1 uso; sem usos, quebra e não volta para o inventário.
+-- usos, preco, alcance, cabo, quedaKmh, arrasto e empregosLoja também mudam no painel (aba Guincho).
+-- O que for salvo lá vale por cima destes valores.
 -- Vendido numa loja só para os empregos abaixo (balcão marcado no painel), para o mecânico revender.
 Config.Portatil = {
     item = 'guincho_portatil',
@@ -38,6 +40,8 @@ Config.Portatil = {
     usos = 10,
     cabo = 'medio',          -- comprimento do cabo (Config.Cabo)
     alcance = 3.0,           -- distância máxima do jogador até onde fixa (m)
+    quedaKmh = 30,           -- preso num carro: acima disso o guincho cai e se perde
+    arrasto = 1.2,           -- velocidade do arrastar, em m/s (vale para todos os guinchos)
     preco = 2500,
     empregosLoja = { 'mecanica_centro', 'mechanic' },
 }

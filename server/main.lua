@@ -3,9 +3,10 @@
 Guincho = {}
 
 function Guincho.publicar()
+    local ajustes = Banco.ajustes() -- aplica no Config.Portatil antes de montar o resto
     local caminhoes = Banco.caminhoes()
     caminhoes[tostring(joaat(Config.Portatil.modelo))] = Banco.portatil()
-    GlobalState.velGuincho = { caminhoes = caminhoes, patios = Banco.patios(), lojas = Banco.lojas() }
+    GlobalState.velGuincho = { caminhoes = caminhoes, patios = Banco.patios(), lojas = Banco.lojas(), portatil = ajustes }
 end
 
 function Guincho.admin(source)
@@ -19,6 +20,8 @@ end
 CreateThread(function()
     Banco.preparar()
     Guincho.publicar()
+    -- a loja usa preço e empregos dos ajustes (painel): registra depois de lê-los
+    Portatil.registrarLoja()
 end)
 
 -- /guinchoteste [mecanismo]: move a plataforma do caminhão em que o admin está (desce e sobe).

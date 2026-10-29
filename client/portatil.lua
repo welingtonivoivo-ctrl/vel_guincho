@@ -16,6 +16,13 @@ local GIRO_VELOCIDADE = 90.0
 local COR_OK, COR_NAO = { 0, 230, 153 }, { 230, 60, 60 }
 local montando = false
 
+-- Ajustes do painel (usos, alcance, cabo, queda, arrasto, loja) chegam no GlobalState e valem na hora
+local function aplicarAjustes(estado)
+    for k, v in pairs(estado and estado.portatil or {}) do P[k] = v end
+end
+aplicarAjustes(GlobalState.velGuincho)
+AddStateBagChangeHandler('velGuincho', 'global', function(_, _, valor) aplicarAjustes(valor) end)
+
 local function notificar(chave, tipo, ...)
     lib.notify({ title = locale('painel_titulo'), description = locale(chave, ...), type = tipo or 'error' })
 end

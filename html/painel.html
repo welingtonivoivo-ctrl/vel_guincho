@@ -107,9 +107,23 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
         const lojas = dados.lojas || [], p = dados.portatil || {};
         const reais = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR');
         $('#editor').innerHTML = `
-        <p class="ajuda">O <b>guincho portátil</b> é um item: o jogador fixa o motor numa árvore, poste ou parede, estica o cabo até o carro capotado e desvira.
-            Cada guincho faz <b>${p.usos || 10} desviradas</b> e quebra. Ele é vendido por <b>${reais(p.preco)}</b> num balcão que só
-            <b>${(p.empregos || []).map(esc).join(', ')}</b> abrem, para o mecânico revender.</p>
+        <p class="ajuda">O <b>guincho portátil</b> é um item: o jogador fixa o motor numa árvore, poste, parede (só desvira) ou na frente de um carro
+            (arrasta e desvira; se o carro andar rápido, o guincho cai e se perde). Cada guincho faz <b>${p.usos || 10} usos</b> e quebra.
+            Ele é vendido por <b>${reais(p.preco)}</b> num balcão que só os empregos escolhidos abaixo abrem, para o mecânico revender.</p>
+        <div class="card"><h3>Ajustes</h3>
+            <p class="ajuda">Valem na hora para todos. Guinchos já vendidos continuam com os usos que tinham.</p>
+            <div class="grade">
+                <div><label>Usos por guincho</label><input type="number" id="a-usos" min="1" max="100" step="1" value="${p.usos ?? 10}"></div>
+                <div><label>Preço na loja (R$)</label><input type="number" id="a-preco" min="0" max="1000000" step="50" value="${p.preco ?? 2500}"></div>
+                <div><label>Distância para fixar (m)</label><input type="number" id="a-alcance" min="1.5" max="6" step="0.5" value="${p.alcance ?? 3}"></div>
+                <div><label>Cabo</label><select id="a-cabo">${Object.entries(CABOS).map(([k, v]) => `<option value="${k}" ${p.cabo === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+                <div><label>Cai do carro acima de (km/h)</label><input type="number" id="a-queda" min="5" max="200" step="5" value="${p.quedaKmh ?? 30}"></div>
+                <div><label>Velocidade do arrastar (m/s, todos os guinchos)</label><input type="number" id="a-arrasto" min="0.3" max="4" step="0.1" value="${p.arrasto ?? 1.2}"></div>
+            </div>
+            <label style="display:block;color:var(--suave);font-size:12.5px;margin:12px 0 6px">Quem compra na loja</label>
+            <div class="empregos">${dados.empregos.map((j) =>
+                `<label><input type="checkbox" data-loja-emp="${esc(j.nome)}" ${(p.empregosLoja || []).includes(j.nome) ? 'checked' : ''}> ${esc(j.rotulo)}</label>`).join('')}</div>
+            <div class="linha" style="margin-top:12px"><button class="btn ouro" id="a-salvar">Salvar ajustes</button></div></div>
         <div class="card"><h3>Novo balcão</h3>
             <p class="ajuda">Vá até o balcão da mecânica, escreva o nome, clique e aperte <b>E</b> em pé no lugar, olhando para o balcão.</p>
             <div class="linha"><input id="l-nome" maxlength="64" placeholder="Ex.: Mecânica do Centro" style="flex:1;min-width:220px">
@@ -117,6 +131,11 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
         <div class="card"><h3>Balcões</h3><div class="pontos">${lojas.length ? lojas.map((l) => `
             <div class="ponto"><div><div class="t1">${esc(l.nome)}</div><div class="mini">${l.coords.x.toFixed(1)}, ${l.coords.y.toFixed(1)}, ${l.coords.z.toFixed(1)}</div></div>
             <button class="btn peq perigo" data-rem-loja="${l.id}">Remover</button></div>`).join('') : '<div class="vazio">Nenhum balcão marcado.</div>'}</div></div>`;
+        $('#a-salvar').onclick = () => {
+            const empregosLoja = [...document.querySelectorAll('[data-loja-emp]')].filter((i) => i.checked).map((i) => i.dataset.lojaEmp);
+            chamar('ajustes', { usos: +$('#a-usos').value, preco: +$('#a-preco').value, alcance: +$('#a-alcance').value, cabo: $('#a-cabo').value,
+                quedaKmh: +$('#a-queda').value, arrasto: +$('#a-arrasto').value, empregosLoja }).then((r) => { if (resposta(r)) carregar(); });
+        };
         $('#l-marcar').onclick = () => { const nome = $('#l-nome').value.trim(); if (!nome) return toast('Escreva o nome do balcão.', 'erro'); nui('painelLoja', { nome }); };
         document.querySelectorAll('[data-rem-loja]').forEach((b) => {
             let armado = 0;
@@ -210,7 +229,7 @@ input[type=checkbox] { width: auto; accent-color: var(--ouro); }
             caminhoes: [{ id: 1, modelo: 'volvocbmesp', nome: 'Guincho Bombeiros (AG)', tipo: 'plataforma', plataforma: 'garfo', empregos: ['bombeiros', 'guincho_sp'], exigeServico: true, cabo: 'medio', pontos: { motor: { x: 0, y: 1, z: 1 } } },
                 { id: 5, modelo: 'towtruck', nome: 'Reboque (gancho)', tipo: 'gancho', plataforma: 'fixa', empregos: ['guincho_sp'], exigeServico: true, cabo: 'medio', pontos: {} }],
             empregos: [{ nome: 'bombeiros', rotulo: 'Corpo de Bombeiros (CBPMESP)' }, { nome: 'guincho_sp', rotulo: 'Auto Socorro & Guincho SP' }, { nome: 'pmesp', rotulo: 'Polícia Militar (PMESP)' }],
-            lojas: [{ id: 1, nome: 'Mecânica do Centro', coords: { x: -211.4, y: -1324.9, z: 30.9 } }], portatil: { preco: 2500, usos: 10, empregos: ['mecanica_centro', 'mechanic'] } };
+            lojas: [{ id: 1, nome: 'Mecânica do Centro', coords: { x: -211.4, y: -1324.9, z: 30.9 } }], portatil: { preco: 2500, usos: 10, alcance: 3, cabo: 'medio', quedaKmh: 30, arrasto: 1.2, empregosLoja: ['bombeiros'] } };
         return { msg: 'Feito (prévia).' };
     }
     carregar();

@@ -132,7 +132,7 @@ local function perder(net, m)
     end
 end
 
--- Vigia os guinchos presos em carros: andou (mais de ~7 km/h) ou o carro sumiu = caiu
+-- Vigia os guinchos presos em carros: passou de P.quedaKmh (painel) ou o carro sumiu = caiu
 CreateThread(function()
     while true do
         local espera, caiu = 2000, {}
@@ -140,7 +140,7 @@ CreateThread(function()
             if m.veiculo then
                 espera = 500
                 local v = veiculoDe(m.veiculo)
-                if DoesEntityExist(m.obj) and (not v or GetEntitySpeed(v) > 2.0) then caiu[#caiu + 1] = net end
+                if DoesEntityExist(m.obj) and (not v or GetEntitySpeed(v) > P.quedaKmh / 3.6) then caiu[#caiu + 1] = net end
             end
         end
         for _, net in ipairs(caiu) do
@@ -213,7 +213,7 @@ AddEventHandler('onResourceStop', function(res)
 end)
 
 -- Loja só dos empregos da mecânica (o balcão é um ponto do Interact marcado no painel)
-local function registrarLoja()
+function Portatil.registrarLoja()
     local grupos = {}
     for _, nome in ipairs(P.empregosLoja) do grupos[nome] = 0 end
     -- o item só existe para o ox_inventory depois que ele reinicia com o items.lua novo
@@ -227,12 +227,9 @@ local function registrarLoja()
     if not ok then print(('^1[vel_guincho] loja do guincho portátil: %s^7'):format(erro)) end
 end
 
-CreateThread(function()
-    GlobalState.velPortateis = {}
-    registrarLoja()
-end)
+GlobalState.velPortateis = {}
 
 -- o ox_inventory reiniciado esquece as lojas registradas por outros resources
 AddEventHandler('onResourceStart', function(res)
-    if res == 'ox_inventory' then registrarLoja() end
+    if res == 'ox_inventory' then Portatil.registrarLoja() end
 end)

@@ -171,7 +171,6 @@ end
 -- Arrastar (Etapa 7C): o veículo do guincho fica parado e o cabo recolhe, puxando o carro pelo chão
 -- até perto do motor. Quem opera controla o carro na rede e dá velocidade a ele a cada quadro; o carro
 -- vai virando para o lado do cabo (engatado pela frente, a frente aponta para o guincho).
-local ARRASTO_VELOCIDADE = 1.2 -- m/s
 local ARRASTO_GIRO = 30.0      -- graus/s
 local ARRASTO_SOBRA = 1.2      -- metros entre o carro e o guincho no fim
 
@@ -208,7 +207,8 @@ local function arrastar(ancora)
             if dist <= meio + ARRASTO_SOBRA then sucesso, chave = true, nil break end
             local dir = para / dist
             local vz = GetEntityVelocity(carro).z
-            SetEntityVelocity(carro, dir.x * ARRASTO_VELOCIDADE, dir.y * ARRASTO_VELOCIDADE, vz)
+            local vel = Config.Portatil.arrasto or 1.2 -- m/s, ajustável no painel
+            SetEntityVelocity(carro, dir.x * vel, dir.y * vel, vz)
             -- vira aos poucos: a ponta engatada vai na frente
             local alvo = math.deg(math.atan(-dir.x, dir.y)) + (s.ponto == 'tras' and 180.0 or 0.0)
             local h = GetEntityHeading(carro)
@@ -318,7 +318,9 @@ CreateThread(function()
         local v = cache.vehicle
         if v and cache.seat == -1 then
             local s = Entity(v).state.velCabo
-            if s and s.carro and not s.carga and not s.desvirar then
+            -- guincho frontal: anda livre (o cabo firme puxa o carro na ré); só freia enquanto arrasta
+            local frontal = s and (cadastroDe(v) or {}).tipo == 'frontal'
+            if s and s.carro and not s.carga and not s.desvirar and (not frontal or s.fase) then
                 espera = 0
                 DisableControlAction(0, 71, true) -- acelerar
                 DisableControlAction(0, 72, true) -- frear / ré

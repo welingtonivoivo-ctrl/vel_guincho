@@ -286,6 +286,16 @@ local function texturas()
     return RopeAreTexturesLoaded()
 end
 
+---Veículo que segura o guincho: a própria viatura (frontal) ou o carro onde o portátil está preso.
+local function veiculoDoGuincho(ent, c)
+    if c.tipo == 'frontal' then return ent end
+    local p = c.tipo == 'portatil' and Entity(ent).state.velPortatil
+    if p and p.veiculo and NetworkDoesNetworkIdExist(p.veiculo) then
+        local v = NetworkGetEntityFromNetworkId(p.veiculo)
+        if v ~= 0 and DoesEntityExist(v) then return v end
+    end
+end
+
 local function montarCabo(veiculo, c, s)
     apagarCabo(veiculo)
     local motor = motorNoMundo(veiculo, c)
@@ -307,6 +317,17 @@ local function montarCabo(veiculo, c, s)
         if not alvo or alvo == 0 or not DoesEntityExist(alvo) then return end
         ponto = pontoDoCarro(alvo, s.ponto)
     end
+    -- Cabo firme (Etapa 7C): guincho num veículo, cabo engatado e parado. Corda física presa aos dois
+    -- veículos, travada no comprimento de agora: dar ré com um puxa o outro. O jogo aplica a física em
+    -- quem controla cada veículo; cada cliente cria a sua corda igual.
+    local host = s.carro and not s.fase and not s.desvirar and veiculoDoGuincho(veiculo, c)
+    if host then
+        local comprimento = math.max(1.0, #(motor - ponto))
+        local corda = AddRope(motor.x, motor.y, motor.z, 0.0, 0.0, 0.0, comprimento, 4, comprimento, 0.5, 0.5, false, false, false, 5.0, false)
+        AttachEntitiesToRope(corda, host, alvo, motor.x, motor.y, motor.z, ponto.x, ponto.y, ponto.z, comprimento, false, false, nil, nil)
+        cabos[veiculo] = { assinatura = json.encode(s), corda = corda, alvo = alvo, ponto = s.ponto, c = c, fisico = true }
+        return
+    end
     -- corda só visual: as pontas são presas a cada quadro (presa a entidades a corda puxa de verdade
     -- e arremessa o caminhão); quem move o carro é o sistema, de forma controlada
     local comprimento = math.max(0.5, #(motor - ponto) * 0.97)
@@ -325,7 +346,7 @@ local function atualizarCabos(meuId)
                 if s.mao == meuId then tenho = veiculo end
                 if not cb or cb.assinatura ~= json.encode(s) then montarCabo(veiculo, info.c, s) cb = cabos[veiculo] end
                 -- o cabo acompanha a distância (sem esticar além do limite)
-                if cb and cb.corda and DoesRopeExist(cb.corda) then
+                if cb and cb.corda and DoesRopeExist(cb.corda) and not cb.fisico then
                     local motor = motorNoMundo(veiculo, info.c)
                     local fim = cb.gancho and GetEntityCoords(cb.gancho) or pontoDoCarro(cb.alvo, cb.ponto)
                     if motor and fim then RopeForceLength(cb.corda, math.max(0.5, #(motor - fim) * 0.97)) end
@@ -360,7 +381,7 @@ CreateThread(function()
     while true do
         local algum = false
         for veiculo, cb in pairs(cabos) do
-            if cb.corda and DoesRopeExist(cb.corda) and DoesEntityExist(veiculo) then
+            if cb.corda and DoesRopeExist(cb.corda) and DoesEntityExist(veiculo) and not cb.fisico then
                 algum = true
                 local motor = motorNoMundo(veiculo, cb.c)
                 local fim = cb.gancho and DoesEntityExist(cb.gancho) and GetEntityCoords(cb.gancho)

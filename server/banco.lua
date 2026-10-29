@@ -33,6 +33,13 @@ local TABELAS = {
         `criado_por` VARCHAR(60) NULL,
         PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4]],
+    [[CREATE TABLE IF NOT EXISTS `vel_guincho_config` (
+        `chave` VARCHAR(40) NOT NULL,
+        `valor` LONGTEXT NOT NULL,
+        `atualizado_por` VARCHAR(60) NULL,
+        `atualizado_em` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`chave`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4]],
     [[CREATE TABLE IF NOT EXISTS `vel_guincho_log` (
         `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         `quando` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -87,6 +94,27 @@ function Banco.portatil()
 end
 
 ---Balcões da loja do guincho portátil (marcados no painel).
+-- Ajustes do guincho portátil que o painel muda (o resto do Config.Portatil fica no arquivo)
+Banco.AJUSTAVEIS = { 'usos', 'preco', 'alcance', 'cabo', 'quedaKmh', 'arrasto', 'empregosLoja' }
+
+---Lê os ajustes salvos e aplica no Config.Portatil (servidor). Devolve só os ajustáveis.
+function Banco.ajustes()
+    local r = MySQL.scalar.await("SELECT valor FROM `vel_guincho_config` WHERE chave = 'portatil'")
+    local salvo = decodificar(r, {})
+    local P = Config.Portatil
+    local atual = {}
+    for _, k in ipairs(Banco.AJUSTAVEIS) do
+        if salvo[k] ~= nil then P[k] = salvo[k] end
+        atual[k] = P[k]
+    end
+    return atual
+end
+
+function Banco.salvarAjustes(valores, quem)
+    MySQL.query.await("INSERT INTO `vel_guincho_config` (chave, valor, atualizado_por) VALUES ('portatil', ?, ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor), atualizado_por = VALUES(atualizado_por)",
+        { json.encode(valores), quem })
+end
+
 function Banco.lojas()
     local lista = {}
     for _, r in ipairs(MySQL.query.await('SELECT id, nome, coords FROM `vel_guincho_lojas` WHERE ativo = 1') or {}) do
