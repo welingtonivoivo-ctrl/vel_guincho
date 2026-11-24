@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'vel_guincho'
 description 'Guincho imersivo: plataforma (fixa ou que inclina), gancho, desvirar, pátio; tudo configurado no painel'
-author 'Street Roleplay'
+author 'Vel (Street Roleplay)'
 version '0.1.0'
 
 ox_lib 'locale'
